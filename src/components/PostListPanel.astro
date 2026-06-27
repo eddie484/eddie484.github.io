@@ -1,13 +1,15 @@
 ---
-import { formatPostDate, getPostUrl, type BlogPost } from '../lib/blog';
+import { formatPostDate, getAllPostUrl, getPostUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
 	posts: BlogPost[];
 	scopeTitle: string;
 	currentPostId?: string;
+	postLinkScope?: 'default' | 'all';
 }
 
-const { posts, scopeTitle, currentPostId } = Astro.props;
+const { posts, scopeTitle, currentPostId, postLinkScope = 'default' } = Astro.props;
+const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
 ---
 
 <details class="post-list-panel" data-post-list-panel>
@@ -30,7 +32,7 @@ const { posts, scopeTitle, currentPostId } = Astro.props;
 			{
 				posts.map((post, index) => (
 					<a
-						href={getPostUrl(post)}
+						href={getHref(post)}
 						class:list={['post-list-row', { active: post.id === currentPostId }]}
 						data-list-row
 						data-index={index}

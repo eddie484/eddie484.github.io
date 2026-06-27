@@ -53,6 +53,10 @@ export function getPostUrl(post: BlogPost) {
 	return `/blog/${post.id}/`;
 }
 
+export function getAllPostUrl(post: BlogPost) {
+	return `/blog/all/${post.id}/`;
+}
+
 export function sortPosts(posts: BlogPost[]) {
 	return [...posts].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 }

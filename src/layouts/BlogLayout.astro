@@ -14,10 +14,19 @@ interface Props {
 	scopeTitle: string;
 	currentPost?: BlogPost;
 	activeCategoryId?: string;
+	postLinkScope?: 'default' | 'all';
 	content?: any;
 }
 
-const { allPosts, scopePosts, scopeTitle, currentPost, activeCategoryId, content: Content } = Astro.props;
+const {
+	allPosts,
+	scopePosts,
+	scopeTitle,
+	currentPost,
+	activeCategoryId,
+	postLinkScope = 'default',
+	content: Content,
+} = Astro.props;
 const pageTitle = currentPost ? `${currentPost.data.title} | ${BLOG_TITLE}` : BLOG_TITLE;
 const pageDescription = currentPost?.data.description ?? BLOG_DESCRIPTION;
 const activeCategory = activeCategoryId ? getCategoryById(activeCategoryId) : undefined;
@@ -34,14 +43,25 @@ const scopeHref = activeCategory ? getCategoryUrl(activeCategory) : '/blog/';
 		<main class="blog-shell">
 			<CategorySidebar posts={allPosts} activeCategoryId={activeCategoryId} />
 			<section class="blog-content" aria-label="글 영역">
-				<PostListPanel posts={scopePosts} scopeTitle={scopeTitle} currentPostId={currentPost?.id} />
+				<PostListPanel
+					posts={scopePosts}
+					scopeTitle={scopeTitle}
+					currentPostId={currentPost?.id}
+					postLinkScope={postLinkScope}
+				/>
 				{
 					currentPost && Content ? (
 						<>
 							<PostArticle post={currentPost}>
 								<Content />
 							</PostArticle>
-							<PostFooterList posts={scopePosts} currentPost={currentPost} scopeTitle={scopeTitle} scopeHref={scopeHref} />
+							<PostFooterList
+								posts={scopePosts}
+								currentPost={currentPost}
+								scopeTitle={scopeTitle}
+								scopeHref={scopeHref}
+								postLinkScope={postLinkScope}
+							/>
 						</>
 					) : (
 						<div class="empty-post">

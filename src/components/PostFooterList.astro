@@ -1,14 +1,16 @@
 ---
-import { formatPostDate, getPostUrl, type BlogPost } from '../lib/blog';
+import { formatPostDate, getAllPostUrl, getPostUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
 	posts: BlogPost[];
 	currentPost: BlogPost;
 	scopeTitle: string;
 	scopeHref: string;
+	postLinkScope?: 'default' | 'all';
 }
 
-const { posts, currentPost, scopeTitle, scopeHref } = Astro.props;
+const { posts, currentPost, scopeTitle, scopeHref, postLinkScope = 'default' } = Astro.props;
+const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
 const pageSize = 5;
 const currentIndex = Math.max(
 	0,
@@ -34,7 +36,7 @@ const listTitle = scopeTitle === '전체보기' ? '전체 글' : `${scopeTitle}�
 		{
 			posts.map((post, index) => (
 				<a
-					href={getPostUrl(post)}
+					href={getHref(post)}
 					class:list={['footer-list-row', { active: post.id === currentPost.id }]}
 					data-footer-row
 					data-index={index}
