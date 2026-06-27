@@ -61,11 +61,30 @@ const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
 
 <script is:inline>
 	(() => {
+		const storageKey = 'blog:post-list-state';
+
 		document.querySelectorAll('[data-post-list-panel]').forEach((panel) => {
 			const rows = Array.from(panel.querySelectorAll('[data-list-row]'));
 			const select = panel.querySelector('[data-page-size]');
 			const pagination = panel.querySelector('[data-pagination]');
 			let page = 1;
+			let pendingState = null;
+
+			try {
+				const saved = sessionStorage.getItem(storageKey);
+				pendingState = saved ? JSON.parse(saved) : null;
+				sessionStorage.removeItem(storageKey);
+			} catch {
+				pendingState = null;
+			}
+
+			if (pendingState?.targetPath === window.location.pathname) {
+				panel.open = true;
+				if ([...select.options].some((option) => option.value === pendingState.pageSize)) {
+					select.value = pendingState.pageSize;
+				}
+				page = Number(pendingState.page || 1);
+			}
 
 			function render() {
 				const pageSize = Number(select.value);
@@ -95,6 +114,24 @@ const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
 					pagination.append(button);
 				}
 			}
+
+			rows.forEach((row) => {
+				row.addEventListener('click', () => {
+					try {
+						const targetPath = new URL(row.href, window.location.href).pathname;
+						sessionStorage.setItem(
+							storageKey,
+							JSON.stringify({
+								targetPath,
+								pageSize: select.value,
+								page,
+							}),
+						);
+					} catch {
+						// State restore is optional; normal link navigation should still work.
+					}
+				});
+			});
 
 			select.addEventListener('change', () => {
 				page = 1;
