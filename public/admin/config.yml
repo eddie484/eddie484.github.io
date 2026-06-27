@@ -3,8 +3,8 @@ backend:
   repo: eddie484/eddie484.github.io
   branch: main
 
-media_folder: src/assets
-public_folder: /src/assets
+media_folder: public/uploads
+public_folder: /uploads
 
 collections:
   - name: blog
@@ -14,5 +14,19 @@ collections:
     fields:
       - { name: title, label: Title, widget: string }
       - { name: description, label: Description, widget: string }
+      - label: Category
+        name: category
+        widget: select
+        options:
+          - { label: 프로젝트, value: projects }
+          - { label: 프로젝트 A, value: project-a }
+          - { label: 설계, value: design }
+          - { label: 잡설, value: notes }
+          - { label: 게임, value: games }
+          - { label: 게임A, value: game-a }
+          - { label: 게임B, value: game-b }
+          - { label: 게임C, value: game-c }
+          - { label: 잡생각, value: thoughts }
+          - { label: 식사, value: food }
       - { name: pubDate, label: Publish Date, widget: datetime }
       - { name: body, label: Body, widget: markdown }
