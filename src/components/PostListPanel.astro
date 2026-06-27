@@ -1,0 +1,227 @@
+---
+import { formatPostDate, getPostUrl, type BlogPost } from '../lib/blog';
+
+interface Props {
+	posts: BlogPost[];
+	scopeTitle: string;
+	currentPostId?: string;
+}
+
+const { posts, scopeTitle, currentPostId } = Astro.props;
+---
+
+<details class="post-list-panel" data-post-list-panel>
+	<summary>
+		<span>
+			<strong>{scopeTitle}</strong>
+			<span>{posts.length}개의 글</span>
+		</span>
+		<span class="summary-state">
+			<span class="summary-state__open">목록닫기</span>
+			<span class="summary-state__closed">목록열기</span>
+		</span>
+	</summary>
+	<div class="post-list-panel__body">
+		<div class="post-list-head">
+			<span>글 제목</span>
+			<span>작성일</span>
+		</div>
+		<div class="post-list-rows" data-list-rows>
+			{
+				posts.map((post, index) => (
+					<a
+						href={getPostUrl(post)}
+						class:list={['post-list-row', { active: post.id === currentPostId }]}
+						data-list-row
+						data-index={index}
+						hidden={index >= 5}
+					>
+						<span class="post-list-row__title">{post.data.title}</span>
+						<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+					</a>
+				))
+			}
+		</div>
+		<div class="post-list-controls">
+			<label>
+				<select data-page-size aria-label="목록 표시 개수">
+					<option value="5" selected>5줄 보기</option>
+					<option value="10">10줄 보기</option>
+					<option value="15">15줄 보기</option>
+					<option value="20">20줄 보기</option>
+					<option value="30">30줄 보기</option>
+				</select>
+			</label>
+			<nav class="post-pagination" data-pagination aria-label="글 목록 페이지"></nav>
+		</div>
+	</div>
+</details>
+
+<script is:inline>
+	(() => {
+		document.querySelectorAll('[data-post-list-panel]').forEach((panel) => {
+			const rows = Array.from(panel.querySelectorAll('[data-list-row]'));
+			const select = panel.querySelector('[data-page-size]');
+			const pagination = panel.querySelector('[data-pagination]');
+			let page = 1;
+
+			function render() {
+				const pageSize = Number(select.value);
+				const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+				page = Math.min(page, totalPages);
+				const start = (page - 1) * pageSize;
+				const end = start + pageSize;
+
+				rows.forEach((row, index) => {
+					row.hidden = index < start || index >= end;
+				});
+
+				pagination.innerHTML = '';
+				if (totalPages <= 1) {
+					return;
+				}
+
+				for (let index = 1; index <= totalPages; index += 1) {
+					const button = document.createElement('button');
+					button.type = 'button';
+					button.textContent = String(index);
+					button.className = index === page ? 'active' : '';
+					button.addEventListener('click', () => {
+						page = index;
+						render();
+					});
+					pagination.append(button);
+				}
+			}
+
+			select.addEventListener('change', () => {
+				page = 1;
+				render();
+			});
+			render();
+		});
+	})();
+</script>
+
+<style>
+	.post-list-panel {
+		margin-bottom: 34px;
+		border-bottom: 2px solid var(--line-strong);
+	}
+
+	.post-list-panel summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 0 12px;
+		color: var(--muted);
+		font-size: 13px;
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.post-list-panel summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.post-list-panel summary strong {
+		margin-right: 5px;
+		color: var(--ink);
+	}
+
+	.summary-state {
+		color: var(--muted);
+		font-size: 12px;
+	}
+
+	.summary-state__open,
+	.post-list-panel[open] .summary-state__closed {
+		display: none;
+	}
+
+	.post-list-panel[open] .summary-state__open {
+		display: inline;
+	}
+
+	.post-list-panel__body {
+		padding-bottom: 18px;
+	}
+
+	.post-list-head,
+	.post-list-row {
+		display: grid;
+		grid-template-columns: 1fr 136px;
+		gap: 20px;
+		align-items: center;
+	}
+
+	.post-list-head {
+		padding: 10px 0;
+		border-bottom: 1px solid var(--line-strong);
+		color: var(--muted);
+		font-size: 12px;
+	}
+
+	.post-list-row {
+		min-height: 34px;
+		border-bottom: 1px solid var(--line);
+		color: var(--ink);
+		font-size: 13px;
+		text-decoration: none;
+	}
+
+	.post-list-row:hover,
+	.post-list-row.active {
+		color: var(--accent);
+	}
+
+	.post-list-row time,
+	.post-list-head span:last-child {
+		color: var(--muted);
+		text-align: right;
+	}
+
+	.post-list-controls {
+		display: grid;
+		grid-template-columns: 120px 1fr 120px;
+		align-items: center;
+		padding-top: 14px;
+	}
+
+	.post-list-controls label {
+		grid-column: 3;
+		justify-self: end;
+	}
+
+	.post-list-controls select {
+		height: 30px;
+		border: 1px solid var(--line-strong);
+		background: var(--surface);
+		color: var(--ink);
+		font-size: 12px;
+	}
+
+	.post-pagination {
+		grid-column: 2;
+		grid-row: 1;
+		display: flex;
+		justify-content: center;
+		gap: 5px;
+	}
+
+	.post-pagination button {
+		min-width: 27px;
+		height: 27px;
+		border: 1px solid transparent;
+		background: transparent;
+		color: var(--ink);
+		font-size: 12px;
+		cursor: pointer;
+	}
+
+	.post-pagination button:hover,
+	.post-pagination button.active {
+		border-color: var(--line-strong);
+		color: var(--accent);
+	}
+</style>

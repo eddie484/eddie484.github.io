@@ -1,0 +1,109 @@
+---
+import { BANNER, BLOG_TITLE, EXTERNAL_NAV, PRIMARY_NAV } from '../config/blog';
+import { getCategoryById, getCategoryUrl } from '../lib/blog';
+
+const currentPath = Astro.url.pathname;
+
+function resolveHref(item: (typeof PRIMARY_NAV)[number]) {
+	if ('href' in item) {
+		return item.href;
+	}
+
+	const category = getCategoryById(item.categoryId);
+	return category ? getCategoryUrl(category) : '/blog/';
+}
+
+function isActive(href: string) {
+	if (href === '/blog/') {
+		return currentPath === '/blog/' || currentPath.startsWith('/blog/');
+	}
+
+	return currentPath === href || currentPath.startsWith(href);
+}
+
+const bannerStyle = BANNER.image
+	? `background-image: linear-gradient(rgba(255,255,255,.64), rgba(255,255,255,.64)), url('${BANNER.image}');`
+	: `background-color: ${BANNER.backgroundColor};`;
+---
+
+<header class="blog-header">
+	<a class="blog-banner" href="/blog/" style={bannerStyle} aria-label={`${BLOG_TITLE} 메인으로 이동`}>
+		<span>{BLOG_TITLE}</span>
+	</a>
+	<nav class="blog-nav" aria-label="상단 메뉴">
+		<div class="blog-nav__group">
+			{
+				PRIMARY_NAV.map((item) => {
+					const href = resolveHref(item);
+					return (
+						<a href={href} class:list={{ active: isActive(href) }}>
+							{item.label}
+						</a>
+					);
+				})
+			}
+		</div>
+		<div class="blog-nav__group blog-nav__group--external">
+			{EXTERNAL_NAV.map((item) => <a href={item.href} target="_blank">{item.label}</a>)}
+		</div>
+	</nav>
+</header>
+
+<style>
+	.blog-header {
+		width: var(--site-width);
+		min-width: var(--site-width);
+		margin: 0 auto;
+	}
+
+	.blog-banner {
+		display: flex;
+		align-items: center;
+		min-height: 178px;
+		padding: 26px 34px;
+		background-position: center;
+		background-size: cover;
+		border: 1px solid var(--line);
+		border-bottom: 0;
+		color: var(--ink);
+		text-decoration: none;
+	}
+
+	.blog-banner span {
+		font-size: 30px;
+		font-weight: 700;
+		letter-spacing: 0;
+	}
+
+	.blog-nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		min-height: 42px;
+		padding: 0 18px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+	}
+
+	.blog-nav__group {
+		display: flex;
+		align-items: center;
+		gap: 18px;
+	}
+
+	.blog-nav a {
+		color: var(--muted);
+		font-size: 13px;
+		font-weight: 700;
+		text-decoration: none;
+	}
+
+	.blog-nav a:hover,
+	.blog-nav a.active {
+		color: var(--accent);
+	}
+
+	.blog-nav__group--external a {
+		font-weight: 600;
+	}
+</style>

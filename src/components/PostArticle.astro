@@ -1,0 +1,120 @@
+---
+import { BLOG_AUTHOR } from '../config/blog';
+import { formatPostDate, getPostCategory, type BlogPost } from '../lib/blog';
+
+interface Props {
+	post: BlogPost;
+}
+
+const { post } = Astro.props;
+const category = getPostCategory(post);
+---
+
+<article class="post-article">
+	<header class="post-article__header">
+		<div class="post-category">{category?.label ?? '카테고리'}</div>
+		<h1>{post.data.title}</h1>
+		<div class="post-meta">
+			<span class="post-author">{BLOG_AUTHOR}</span>
+			<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+		</div>
+	</header>
+	<div class="post-body">
+		<slot />
+	</div>
+</article>
+
+<style>
+	.post-article__header {
+		padding-bottom: 22px;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.post-category {
+		margin-bottom: 22px;
+		color: var(--muted);
+		font-size: 14px;
+	}
+
+	.post-article h1 {
+		margin: 0 0 24px;
+		color: var(--ink);
+		font-size: 30px;
+		font-weight: 500;
+		line-height: 1.45;
+	}
+
+	.post-meta {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+	.post-author {
+		color: var(--ink);
+		font-weight: 700;
+	}
+
+	.post-body {
+		padding-top: 34px;
+		color: var(--body);
+		font-size: 15px;
+		line-height: 1.9;
+	}
+
+	.post-body :global(p) {
+		margin: 0 0 1.4em;
+	}
+
+	.post-body :global(h1),
+	.post-body :global(h2),
+	.post-body :global(h3),
+	.post-body :global(h4) {
+		margin: 2em 0 0.7em;
+		color: var(--ink);
+		line-height: 1.35;
+	}
+
+	.post-body :global(h2) {
+		font-size: 22px;
+	}
+
+	.post-body :global(h3) {
+		font-size: 18px;
+	}
+
+	.post-body :global(a) {
+		color: var(--accent);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+	}
+
+	.post-body :global(img) {
+		display: block;
+		max-width: 100%;
+		height: auto;
+		margin: 28px auto;
+		border-radius: 2px;
+	}
+
+	.post-body :global(pre) {
+		overflow-x: auto;
+		padding: 16px;
+		border: 1px solid var(--line);
+		border-radius: 4px;
+		background: var(--surface-strong);
+	}
+
+	.post-body :global(code) {
+		padding: 2px 5px;
+		border-radius: 3px;
+		background: var(--surface-strong);
+	}
+
+	.post-body :global(pre code) {
+		padding: 0;
+		background: transparent;
+	}
+</style>

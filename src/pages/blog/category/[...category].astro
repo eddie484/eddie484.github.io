@@ -1,0 +1,27 @@
+---
+import { getCollection, render } from 'astro:content';
+import BlogLayout from '../../../layouts/BlogLayout.astro';
+import { FLAT_CATEGORIES, getPostsForCategory, sortPosts } from '../../../lib/blog';
+
+export function getStaticPaths() {
+	return FLAT_CATEGORIES.map((category) => ({
+		params: { category: category.path.join('/') },
+		props: category,
+	}));
+}
+
+const category = Astro.props;
+const allPosts = sortPosts(await getCollection('blog'));
+const scopePosts = getPostsForCategory(allPosts, category.id);
+const currentPost = scopePosts[0];
+const { Content } = currentPost ? await render(currentPost) : { Content: undefined };
+---
+
+<BlogLayout
+	allPosts={allPosts}
+	scopePosts={scopePosts}
+	scopeTitle={category.label}
+	currentPost={currentPost}
+	activeCategoryId={category.id}
+	content={Content}
+/>

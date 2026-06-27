@@ -1,6 +1,7 @@
 ---
 import { type CollectionEntry, getCollection, render } from 'astro:content';
-import BlogPost from '../../layouts/BlogPost.astro';
+import BlogLayout from '../../layouts/BlogLayout.astro';
+import { getPostScopePosts, getPostScopeTitle, sortPosts } from '../../lib/blog';
 
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
@@ -9,12 +10,21 @@ export async function getStaticPaths() {
 		props: post,
 	}));
 }
+
 type Props = CollectionEntry<'blog'>;
 
-const post = Astro.props;
-const { Content } = await render(post);
+const currentPost = Astro.props;
+const allPosts = sortPosts(await getCollection('blog'));
+const scopePosts = getPostScopePosts(allPosts, currentPost);
+const scopeTitle = getPostScopeTitle(currentPost);
+const { Content } = await render(currentPost);
 ---
 
-<BlogPost {...post.data}>
-	<Content />
-</BlogPost>
+<BlogLayout
+	allPosts={allPosts}
+	scopePosts={scopePosts}
+	scopeTitle={scopeTitle}
+	currentPost={currentPost}
+	activeCategoryId={currentPost.data.category}
+	content={Content}
+/>

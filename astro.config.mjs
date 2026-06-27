@@ -8,6 +8,9 @@ import { defineConfig, fontProviders } from 'astro/config';
 export default defineConfig({
 	site: 'https://eddie484.github.io',
 	integrations: [mdx(), sitemap()],
+	vite: {
+		cacheDir: '.astro/vite-cache',
+	},
 	fonts: [
 		{
 			provider: fontProviders.local(),

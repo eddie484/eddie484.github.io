@@ -1,0 +1,87 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import BlogHeader from '../components/BlogHeader.astro';
+import CategorySidebar from '../components/CategorySidebar.astro';
+import PostArticle from '../components/PostArticle.astro';
+import PostFooterList from '../components/PostFooterList.astro';
+import PostListPanel from '../components/PostListPanel.astro';
+import { BLOG_DESCRIPTION, BLOG_TITLE } from '../config/blog';
+import { getPostScopePosts, getPostScopeTitle, type BlogPost } from '../lib/blog';
+
+interface Props {
+	allPosts: BlogPost[];
+	scopePosts: BlogPost[];
+	scopeTitle: string;
+	currentPost?: BlogPost;
+	activeCategoryId?: string;
+	content?: any;
+}
+
+const { allPosts, scopePosts, scopeTitle, currentPost, activeCategoryId, content: Content } = Astro.props;
+const pageTitle = currentPost ? `${currentPost.data.title} | ${BLOG_TITLE}` : BLOG_TITLE;
+const pageDescription = currentPost?.data.description ?? BLOG_DESCRIPTION;
+const footerPosts = currentPost ? getPostScopePosts(allPosts, currentPost) : [];
+const footerScopeTitle = currentPost ? getPostScopeTitle(currentPost) : scopeTitle;
+---
+
+<!doctype html>
+<html lang="ko">
+	<head>
+		<BaseHead title={pageTitle} description={pageDescription} />
+	</head>
+	<body>
+		<BlogHeader />
+		<main class="blog-shell">
+			<CategorySidebar posts={allPosts} activeCategoryId={activeCategoryId} />
+			<section class="blog-content" aria-label="글 영역">
+				<PostListPanel posts={scopePosts} scopeTitle={scopeTitle} currentPostId={currentPost?.id} />
+				{
+					currentPost && Content ? (
+						<>
+							<PostArticle post={currentPost}>
+								<Content />
+							</PostArticle>
+							<PostFooterList posts={footerPosts} currentPost={currentPost} />
+						</>
+					) : (
+						<div class="empty-post">
+							<h1>{footerScopeTitle}</h1>
+							<p>아직 이 범위에 표시할 글이 없습니다.</p>
+						</div>
+					)
+				}
+			</section>
+		</main>
+	</body>
+</html>
+
+<style>
+	.blog-shell {
+		display: flex;
+		gap: var(--layout-gap);
+		width: var(--site-width);
+		min-width: var(--site-width);
+		margin: 22px auto 80px;
+		align-items: flex-start;
+	}
+
+	.blog-content {
+		width: var(--content-width);
+		flex: 0 0 var(--content-width);
+		padding: 34px 36px 54px;
+		border: 1px solid var(--line);
+		background: var(--surface);
+	}
+
+	.empty-post {
+		padding: 40px 0;
+		color: var(--muted);
+		font-size: 14px;
+	}
+
+	.empty-post h1 {
+		margin: 0 0 10px;
+		color: var(--ink);
+		font-size: 24px;
+	}
+</style>

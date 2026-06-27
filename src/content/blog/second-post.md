@@ -1,7 +1,8 @@
 ---
 title: 'Second post'
 description: 'Lorem ipsum dolor sit amet'
-pubDate: 'Jul 15 2022'
+category: 'game-a'
+pubDate: '2022-07-15T14:20:00'
 heroImage: '../../assets/blog-placeholder-4.jpg'
 ---
 

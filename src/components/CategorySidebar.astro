@@ -1,0 +1,152 @@
+---
+import { CATEGORY_TREE, type CategoryItem, type CategoryTreeItem } from '../config/blog';
+import { getCategoryById, getCategoryUrl, isCategoryItem, type BlogPost } from '../lib/blog';
+
+interface Props {
+	posts: BlogPost[];
+	activeCategoryId?: string;
+}
+
+const { posts, activeCategoryId } = Astro.props;
+
+type DisplayCategory =
+	| {
+			type: 'category';
+			category: CategoryItem;
+			depth: number;
+	  }
+	| {
+			type: 'divider';
+			id: string;
+	  };
+
+function flattenDisplayItems(items: CategoryTreeItem[], depth = 0): DisplayCategory[] {
+	return items.flatMap((item) => {
+		if (!isCategoryItem(item)) {
+			return [{ type: 'divider', id: item.id }];
+		}
+
+		return [
+			{ type: 'category', category: item, depth },
+			...flattenDisplayItems(item.children ?? [], depth + 1),
+		];
+	});
+}
+
+function renderIcon(item: CategoryItem) {
+	return item.icon === 'folder' ? '▣' : '▢';
+}
+
+function isActive(item: CategoryItem) {
+	const active = activeCategoryId ? getCategoryById(activeCategoryId) : undefined;
+	const current = getCategoryById(item.id);
+	if (!active || !current) {
+		return false;
+	}
+
+	return active.path.join('/').startsWith(current.path.join('/'));
+}
+
+const displayItems = flattenDisplayItems(CATEGORY_TREE);
+---
+
+<aside class="category-sidebar" aria-label="카테고리">
+	<div class="category-sidebar__title">카테고리</div>
+	<nav>
+		<a class:list={['category-link', 'category-link--all', { active: !activeCategoryId }]} href="/blog/">
+			<span class="category-icon">▢</span>
+			<span>전체보기</span>
+			<span class="post-count">({posts.length})</span>
+		</a>
+		<ul class="category-tree">
+			{
+				displayItems.map((item) =>
+					item.type === 'divider' ? (
+						<li class="category-divider" aria-hidden="true"></li>
+					) : (
+						<li>
+							<a
+								class:list={['category-link', { active: isActive(item.category) }]}
+								href={getCategoryById(item.category.id) ? getCategoryUrl(getCategoryById(item.category.id)!) : '/blog/'}
+								style={`--depth: ${item.depth}`}
+							>
+								<span class="category-icon">{renderIcon(item.category)}</span>
+								<span>{item.category.label}</span>
+							</a>
+						</li>
+					),
+				)
+			}
+		</ul>
+	</nav>
+</aside>
+
+<style>
+	.category-sidebar {
+		width: var(--sidebar-width);
+		flex: 0 0 var(--sidebar-width);
+		align-self: flex-start;
+		border: 1px solid var(--line);
+		background: var(--surface);
+		font-size: 13px;
+	}
+
+	.category-sidebar__title {
+		padding: 9px 12px;
+		border-bottom: 1px solid var(--line);
+		background: var(--surface-strong);
+		color: var(--ink);
+		font-size: 14px;
+		font-weight: 800;
+	}
+
+	.category-sidebar nav {
+		padding: 10px 10px 14px;
+	}
+
+	.category-tree {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.category-link {
+		display: flex;
+		align-items: baseline;
+		gap: 5px;
+		min-height: 22px;
+		padding-left: calc(var(--depth, 0) * 14px);
+		color: var(--side-ink);
+		line-height: 1.3;
+		text-decoration: none;
+	}
+
+	.category-link:hover,
+	.category-link.active {
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.category-link--all {
+		--depth: 0;
+		margin-bottom: 7px;
+		font-weight: 800;
+	}
+
+	.category-icon {
+		width: 12px;
+		flex: 0 0 12px;
+		color: var(--muted);
+		font-size: 10px;
+	}
+
+	.post-count {
+		color: var(--muted);
+	}
+
+	.category-divider {
+		height: 1px;
+		margin: 9px 0;
+		border-top: 1px dashed var(--line-strong);
+	}
+</style>
