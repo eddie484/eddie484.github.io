@@ -170,6 +170,10 @@ const { posts, scopeTitle, currentPostId } = Astro.props;
 		text-decoration: none;
 	}
 
+	.post-list-row[hidden] {
+		display: none !important;
+	}
+
 	.post-list-row:hover,
 	.post-list-row.active {
 		color: var(--accent);

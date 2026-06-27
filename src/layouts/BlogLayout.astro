@@ -6,7 +6,7 @@ import PostArticle from '../components/PostArticle.astro';
 import PostFooterList from '../components/PostFooterList.astro';
 import PostListPanel from '../components/PostListPanel.astro';
 import { BLOG_DESCRIPTION, BLOG_TITLE } from '../config/blog';
-import { getPostScopePosts, getPostScopeTitle, type BlogPost } from '../lib/blog';
+import { getCategoryById, getCategoryUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
 	allPosts: BlogPost[];
@@ -20,8 +20,8 @@ interface Props {
 const { allPosts, scopePosts, scopeTitle, currentPost, activeCategoryId, content: Content } = Astro.props;
 const pageTitle = currentPost ? `${currentPost.data.title} | ${BLOG_TITLE}` : BLOG_TITLE;
 const pageDescription = currentPost?.data.description ?? BLOG_DESCRIPTION;
-const footerPosts = currentPost ? getPostScopePosts(allPosts, currentPost) : [];
-const footerScopeTitle = currentPost ? getPostScopeTitle(currentPost) : scopeTitle;
+const activeCategory = activeCategoryId ? getCategoryById(activeCategoryId) : undefined;
+const scopeHref = activeCategory ? getCategoryUrl(activeCategory) : '/blog/';
 ---
 
 <!doctype html>
@@ -41,11 +41,11 @@ const footerScopeTitle = currentPost ? getPostScopeTitle(currentPost) : scopeTit
 							<PostArticle post={currentPost}>
 								<Content />
 							</PostArticle>
-							<PostFooterList posts={footerPosts} currentPost={currentPost} />
+							<PostFooterList posts={scopePosts} currentPost={currentPost} scopeTitle={scopeTitle} scopeHref={scopeHref} />
 						</>
 					) : (
 						<div class="empty-post">
-							<h1>{footerScopeTitle}</h1>
+							<h1>{scopeTitle}</h1>
 							<p>아직 이 범위에 표시할 글이 없습니다.</p>
 						</div>
 					)

@@ -1,56 +1,90 @@
 ---
-import {
-	formatPostDate,
-	getAdjacentWindow,
-	getCategoryUrl,
-	getPostCategory,
-	getPostUrl,
-	type BlogPost,
-} from '../lib/blog';
+import { formatPostDate, getPostUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
 	posts: BlogPost[];
 	currentPost: BlogPost;
+	scopeTitle: string;
+	scopeHref: string;
 }
 
-const { posts, currentPost } = Astro.props;
-const currentCategory = getPostCategory(currentPost);
-const { items, newerPost, olderPost } = getAdjacentWindow(posts, currentPost);
-const scopeUrl = currentCategory ? getCategoryUrl(currentCategory) : '/blog/';
+const { posts, currentPost, scopeTitle, scopeHref } = Astro.props;
+const pageSize = 5;
+const currentIndex = Math.max(
+	0,
+	posts.findIndex((post) => post.id === currentPost.id),
+);
+const lastStart = Math.max(0, posts.length - pageSize);
+const initialStart = Math.min(Math.max(0, currentIndex - 2), lastStart);
+const listTitle = scopeTitle === '전체보기' ? '전체 글' : `${scopeTitle}의 글`;
 ---
 
-<section class="post-footer-list" aria-label="현재 카테고리의 다른 글">
+<section
+	class="post-footer-list"
+	aria-label="현재 범위의 다른 글"
+	data-footer-list
+	data-initial-start={initialStart}
+	data-page-size={pageSize}
+>
 	<header>
-		<strong>{currentCategory?.label ?? '이 카테고리'}의 글</strong>
-		<a href={scopeUrl}>전체글 보기</a>
+		<strong>{listTitle}</strong>
+		<a href={scopeHref}>전체글 보기</a>
 	</header>
 	<div class="footer-list-rows">
 		{
-			items.map((post) => (
-				<a href={getPostUrl(post)} class:list={['footer-list-row', { active: post.id === currentPost.id }]}>
+			posts.map((post, index) => (
+				<a
+					href={getPostUrl(post)}
+					class:list={['footer-list-row', { active: post.id === currentPost.id }]}
+					data-footer-row
+					data-index={index}
+					hidden={index < initialStart || index >= initialStart + pageSize}
+				>
 					<span>{post.data.title}</span>
 					<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
 				</a>
 			))
 		}
 	</div>
-	<nav class="footer-list-nav" aria-label="이전 다음 글">
-		{
-			newerPost ? (
-				<a href={getPostUrl(newerPost)}>‹ 이전</a>
-			) : (
-				<span class="disabled">‹ 이전</span>
-			)
-		}
-		{
-			olderPost ? (
-				<a href={getPostUrl(olderPost)}>다음 ›</a>
-			) : (
-				<span class="disabled">다음 ›</span>
-			)
-		}
+	<nav class="footer-list-nav" aria-label="목록 이동">
+		<button type="button" data-footer-prev>‹ 이전</button>
+		<button type="button" data-footer-next>다음 ›</button>
 	</nav>
 </section>
+
+<script is:inline>
+	(() => {
+		document.querySelectorAll('[data-footer-list]').forEach((list) => {
+			const rows = Array.from(list.querySelectorAll('[data-footer-row]'));
+			const prev = list.querySelector('[data-footer-prev]');
+			const next = list.querySelector('[data-footer-next]');
+			const pageSize = Number(list.dataset.pageSize || 5);
+			const lastStart = Math.max(0, rows.length - pageSize);
+			let start = Math.min(Number(list.dataset.initialStart || 0), lastStart);
+
+			function render() {
+				rows.forEach((row, index) => {
+					row.hidden = index < start || index >= start + pageSize;
+				});
+
+				prev.disabled = start <= 0;
+				next.disabled = start >= lastStart;
+			}
+
+			prev.addEventListener('click', () => {
+				start = Math.max(0, start - pageSize);
+				render();
+			});
+
+			next.addEventListener('click', () => {
+				start = Math.min(lastStart, start + pageSize);
+				render();
+			});
+
+			render();
+		});
+	})();
+</script>
 
 <style>
 	.post-footer-list {
@@ -89,6 +123,10 @@ const scopeUrl = currentCategory ? getCategoryUrl(currentCategory) : '/blog/';
 		text-decoration: none;
 	}
 
+	.footer-list-row[hidden] {
+		display: none !important;
+	}
+
 	.footer-list-row:hover,
 	.footer-list-row.active {
 		color: var(--accent);
@@ -109,16 +147,20 @@ const scopeUrl = currentCategory ? getCategoryUrl(currentCategory) : '/blog/';
 		font-size: 13px;
 	}
 
-	.footer-list-nav a {
+	.footer-list-nav button {
+		border: 0;
+		background: transparent;
 		color: var(--ink);
-		text-decoration: none;
+		font: inherit;
+		cursor: pointer;
 	}
 
-	.footer-list-nav a:hover {
+	.footer-list-nav button:hover:not(:disabled) {
 		color: var(--accent);
 	}
 
-	.footer-list-nav .disabled {
+	.footer-list-nav button:disabled {
 		color: var(--muted-light);
+		cursor: default;
 	}
 </style>
