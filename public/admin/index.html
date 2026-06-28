@@ -7,30 +7,26 @@
   <title>Content Manager</title>
   <style>
     #nc-root {
-      --cms-writing-max-width: 1120px;
-      --cms-writing-min-height: clamp(520px, 68vh, 920px);
+      --cms-writing-max-width: min(1280px, calc(100vw - 96px));
+      --cms-writing-min-height: clamp(540px, 70vh, 960px);
     }
 
-    #nc-root [data-cms-writing-form='true'] {
-      width: min(100%, 1280px) !important;
-      max-width: 1280px !important;
-      margin-inline: auto !important;
+    #nc-root .content-editor .content-area,
+    #nc-root .content-editor [data-cms-edit-container='true'],
+    #nc-root .content-editor .pane[data-mode='edit'] {
+      width: 100% !important;
+      max-width: none !important;
+      flex: 1 1 auto !important;
     }
 
-    html[data-cms-focus-edit='true'] #nc-root [data-cms-entry-layout='true'] {
-      grid-template-columns: minmax(0, 1fr) !important;
-      justify-content: center !important;
+    #nc-root .content-editor .content-area > *:has(.pane[data-mode='preview']) > *:has(.pane[data-mode='edit']) {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      flex: 1 1 100% !important;
     }
 
-    html[data-cms-focus-edit='true'] #nc-root [data-cms-edit-pane='true'] {
-      width: min(100%, 1280px) !important;
-      max-width: 1280px !important;
-      flex: 0 1 1280px !important;
-      margin-inline: auto !important;
-    }
-
-    html[data-cms-focus-edit='true'] #nc-root [data-cms-preview-pane='true'],
-    html[data-cms-focus-edit='true'] #nc-root [data-cms-splitter='true'] {
+    #nc-root .content-editor .content-area > *:has(.pane[data-mode='preview']) > *:not(:has(.pane[data-mode='edit'])) {
       display: none !important;
       width: 0 !important;
       min-width: 0 !important;
@@ -41,61 +37,74 @@
       pointer-events: none !important;
     }
 
-    #nc-root [data-cms-body-field='true'] {
-      grid-column: 1 / -1 !important;
+    #nc-root .content-editor .sui.resizable-pane:has(.pane[data-mode='edit']),
+    #nc-root .content-editor [data-cms-edit-container='true'] {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      flex: 1 1 100% !important;
+    }
+
+    #nc-root .content-editor .sui.resizable-pane:has(.pane[data-mode='preview']),
+    #nc-root .content-editor .pane[data-mode='preview'],
+    #nc-root .content-editor .sui.resizable-handle,
+    #nc-root .content-editor [data-cms-preview-container='true'],
+    #nc-root .content-editor [data-cms-resize-handle='true'] {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      flex: 0 0 0 !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    #nc-root .content-editor .pane[data-mode='edit'] {
+      margin-inline: auto !important;
+    }
+
+    #nc-root .content-editor .pane[data-mode='edit'] > * {
       width: min(100%, var(--cms-writing-max-width)) !important;
-      max-width: var(--cms-writing-max-width) !important;
+      margin-inline: auto !important;
+    }
+
+    #nc-root .content-editor .field[data-key-path='body'] {
+      width: min(100%, var(--cms-writing-max-width)) !important;
       margin: clamp(24px, 4vw, 52px) auto !important;
       padding: clamp(16px, 2.5vw, 28px) !important;
-      border: 1px solid color-mix(in srgb, var(--sui-border-color, #d4d8dd), transparent 10%) !important;
+      border: 1px solid color-mix(in srgb, var(--sui-primary-border-color, #d4d8dd), transparent 10%) !important;
       border-radius: 18px !important;
       background: var(--sui-content-background-color, #fff) !important;
       box-shadow: 0 22px 70px rgb(15 23 42 / 10%) !important;
       box-sizing: border-box !important;
     }
 
-    #nc-root [data-cms-body-field='true'],
-    #nc-root [data-cms-body-field='true'] * {
+    #nc-root .content-editor .field[data-key-path='body'],
+    #nc-root .content-editor .field[data-key-path='body'] * {
       box-sizing: border-box !important;
     }
 
-    #nc-root [data-cms-body-field='true'] > * {
+    #nc-root .content-editor .field[data-key-path='body'] .field-wrapper,
+    #nc-root .content-editor .field[data-key-path='body'] .sui.text-editor,
+    #nc-root .content-editor .field[data-key-path='body'] .lexical-root,
+    #nc-root .content-editor .field[data-key-path='body'] textarea,
+    #nc-root .content-editor .field[data-key-path='body'] [role='textbox'] {
+      width: 100% !important;
       max-width: none !important;
+      min-height: var(--cms-writing-min-height) !important;
     }
 
-    #nc-root [data-cms-body-field='true'] label,
-    #nc-root [data-cms-body-field='true'] legend {
-      margin-bottom: 12px !important;
-      font-size: 15px !important;
-      font-weight: 700 !important;
-    }
-
-    #nc-root [data-cms-body-field='true'] [role='toolbar'],
-    #nc-root [data-cms-body-field='true'] [class*='toolbar' i] {
+    #nc-root .content-editor .field[data-key-path='body'] .sui.toolbar {
       position: sticky !important;
       top: 0 !important;
       z-index: 20 !important;
       border-radius: 12px 12px 0 0 !important;
     }
 
-    #nc-root [data-cms-body-field='true'] textarea,
-    #nc-root [data-cms-body-field='true'] [contenteditable='true'],
-    #nc-root [data-cms-body-field='true'] [role='textbox'],
-    #nc-root [data-cms-body-field='true'] [data-cms-body-editor='true'],
-    #nc-root [data-cms-body-field='true'] .cm-editor,
-    #nc-root [data-cms-body-field='true'] .cm-scroller,
-    #nc-root [data-cms-body-field='true'] .cm-content,
-    #nc-root [data-cms-body-field='true'] .ProseMirror,
-    #nc-root [data-cms-body-field='true'] [class*='CodeMirror'] {
-      min-height: var(--cms-writing-min-height) !important;
-    }
-
-    #nc-root [data-cms-body-field='true'] textarea,
-    #nc-root [data-cms-body-field='true'] [contenteditable='true'],
-    #nc-root [data-cms-body-field='true'] [role='textbox'],
-    #nc-root [data-cms-body-field='true'] [data-cms-body-editor='true'],
-    #nc-root [data-cms-body-field='true'] .cm-content,
-    #nc-root [data-cms-body-field='true'] .ProseMirror {
+    #nc-root .content-editor .field[data-key-path='body'] .lexical-root,
+    #nc-root .content-editor .field[data-key-path='body'] textarea,
+    #nc-root .content-editor .field[data-key-path='body'] [role='textbox'] {
       padding: clamp(18px, 2.5vw, 34px) !important;
       font-size: 17px !important;
       line-height: 1.85 !important;
@@ -103,11 +112,11 @@
 
     @media (width < 760px) {
       #nc-root {
+        --cms-writing-max-width: 100%;
         --cms-writing-min-height: 62vh;
       }
 
-      #nc-root [data-cms-body-field='true'] {
-        width: 100% !important;
+      #nc-root .content-editor .field[data-key-path='body'] {
         margin-block: 18px !important;
         padding: 12px !important;
         border-radius: 12px !important;
@@ -119,212 +128,32 @@
 <body>
   <script>
     (() => {
-      const labelPattern = /^(body|본문)\s*\*?$/i;
-      const editorSelector = [
-        'textarea',
-        '[contenteditable="true"]',
-        '[role="textbox"]',
-        '.cm-editor',
-        '.ProseMirror',
-        '[class*="CodeMirror"]',
-      ].join(',');
-
       let scheduled = false;
-      let retryCount = 0;
 
-      function normalizeText(text) {
-        return (text || '').replace(/\s+/g, ' ').trim();
+      function paneContainer(pane) {
+        return pane.closest('.sui.resizable-pane') || pane.parentElement?.parentElement || null;
       }
 
-      function isEditorElement(element) {
-        return element.matches?.(editorSelector) || false;
-      }
-
-      function hasEditor(element) {
-        return isEditorElement(element) || Boolean(element.querySelector?.(editorSelector));
-      }
-
-      function isBodyLabel(element) {
-        const text = normalizeText(element.textContent);
-        const ariaLabel = normalizeText(element.getAttribute?.('aria-label'));
-        const htmlFor = normalizeText(element.getAttribute?.('for'));
-        const name = normalizeText(element.getAttribute?.('name'));
-        const id = normalizeText(element.getAttribute?.('id'));
-
-        return (
-          labelPattern.test(text) ||
-          labelPattern.test(ariaLabel) ||
-          /^body$/i.test(htmlFor) ||
-          /^body$/i.test(name) ||
-          /^body$/i.test(id)
-        );
-      }
-
-      function isVisible(element) {
-        const rect = element.getBoundingClientRect?.();
-
-        return Boolean(rect && rect.width > 0 && rect.height > 0);
-      }
-
-      function hasExactText(element, expectedText) {
-        const expected = normalizeText(expectedText).toLowerCase();
-
-        return [...element.querySelectorAll('*')].some(
-          (item) => normalizeText(item.textContent).toLowerCase() === expected && isVisible(item),
-        );
-      }
-
-      function findPaneByTitle(root, title) {
-        const oppositeTitle = title === 'Preview' ? 'Edit' : 'Preview';
-        const titleElement = [...root.querySelectorAll('*')].find(
-          (element) => normalizeText(element.textContent) === title && isVisible(element),
-        );
-
-        if (!titleElement) {
-          return null;
-        }
-
-        let current = titleElement.parentElement;
-
-        for (let depth = 0; current && current !== root && depth < 12; depth += 1) {
-          const rect = current.getBoundingClientRect();
-
-          if (
-            rect.width > 260 &&
-            rect.height > window.innerHeight * 0.5 &&
-            !hasExactText(current, oppositeTitle)
-          ) {
-            return current;
-          }
-
-          current = current.parentElement;
-        }
-
-        return null;
-      }
-
-      function findSharedLayout(root, first, second) {
-        let current = first?.parentElement;
-
-        while (current && current !== root) {
-          if (current.contains(second)) {
-            return current;
-          }
-
-          current = current.parentElement;
-        }
-
-        return null;
-      }
-
-      function markSplitters(layout, editPane, previewPane) {
-        if (!layout || !editPane || !previewPane) {
-          return;
-        }
-
-        const editRect = editPane.getBoundingClientRect();
-        const previewRect = previewPane.getBoundingClientRect();
-        const gutterStart = Math.min(editRect.right, previewRect.left) - 42;
-        const gutterEnd = Math.max(editRect.right, previewRect.left) + 42;
-
-        layout.querySelectorAll('*').forEach((element) => {
-          const rect = element.getBoundingClientRect();
-          const isGutter =
-            rect.width > 0 &&
-            rect.width <= 42 &&
-            rect.height > window.innerHeight * 0.35 &&
-            rect.left >= gutterStart &&
-            rect.right <= gutterEnd;
-
-          if (isGutter && element.getAttribute('data-cms-splitter') !== 'true') {
-            element.setAttribute('data-cms-splitter', 'true');
-          }
-        });
-      }
-
-      function markEntryLayout(root) {
-        const editPane = findPaneByTitle(root, 'Edit');
-        const previewPane = findPaneByTitle(root, 'Preview');
-        const layout = findSharedLayout(root, editPane, previewPane);
-
-        if (!editPane || !previewPane || !layout) {
-          return;
-        }
-
-        document.documentElement.setAttribute('data-cms-focus-edit', 'true');
-
-        if (editPane.getAttribute('data-cms-edit-pane') !== 'true') {
-          editPane.setAttribute('data-cms-edit-pane', 'true');
-        }
-
-        if (previewPane.getAttribute('data-cms-preview-pane') !== 'true') {
-          previewPane.setAttribute('data-cms-preview-pane', 'true');
-        }
-
-        if (layout.getAttribute('data-cms-entry-layout') !== 'true') {
-          layout.setAttribute('data-cms-entry-layout', 'true');
-        }
-
-        markSplitters(layout, editPane, previewPane);
-      }
-
-      function findFieldRoot(root, start) {
-        let current = isEditorElement(start) ? start.parentElement : start;
-
-        for (let depth = 0; current && current !== root && depth < 12; depth += 1) {
-          if (hasEditor(current)) {
-            const rect = current.getBoundingClientRect();
-            const containsPreview = hasExactText(current, 'Preview');
-
-            if (rect.width > 260 && rect.height > 120 && !containsPreview) {
-              return current;
-            }
-          }
-
-          current = current.parentElement;
-        }
-
-        return null;
-      }
-
-      function markBodyEditor() {
+      function markEditorLayout() {
         scheduled = false;
 
-        const root = document.getElementById('nc-root');
+        const editor = document.querySelector('#nc-root .content-editor');
 
-        if (!root) {
+        if (!editor) {
           return;
         }
 
-        markEntryLayout(root);
+        editor.querySelectorAll('.pane[data-mode="edit"]').forEach((pane) => {
+          paneContainer(pane)?.setAttribute('data-cms-edit-container', 'true');
+        });
 
-        const candidates = [
-          ...root.querySelectorAll('label, legend, [aria-label], [name], [id], [for]'),
-        ].filter(isBodyLabel);
+        editor.querySelectorAll('.pane[data-mode="preview"]').forEach((pane) => {
+          paneContainer(pane)?.setAttribute('data-cms-preview-container', 'true');
+        });
 
-        const field = candidates
-          .map((candidate) => findFieldRoot(root, candidate))
-          .find(Boolean);
-
-        if (!field) {
-          return;
-        }
-
-        if (field.getAttribute('data-cms-body-field') !== 'true') {
-          field.setAttribute('data-cms-body-field', 'true');
-        }
-
-        const editor = isEditorElement(field) ? field : field.querySelector(editorSelector);
-
-        if (editor && editor.getAttribute('data-cms-body-editor') !== 'true') {
-          editor.setAttribute('data-cms-body-editor', 'true');
-        }
-
-        const form = field.closest('form');
-
-        if (form && form.getAttribute('data-cms-writing-form') !== 'true') {
-          form.setAttribute('data-cms-writing-form', 'true');
-        }
+        editor.querySelectorAll('.sui.resizable-handle').forEach((handle) => {
+          handle.setAttribute('data-cms-resize-handle', 'true');
+        });
       }
 
       function scheduleMarking() {
@@ -333,7 +162,7 @@
         }
 
         scheduled = true;
-        requestAnimationFrame(markBodyEditor);
+        requestAnimationFrame(markEditorLayout);
       }
 
       new MutationObserver(scheduleMarking).observe(document.documentElement, {
@@ -345,15 +174,7 @@
       window.addEventListener('hashchange', scheduleMarking);
       window.addEventListener('load', scheduleMarking);
       scheduleMarking();
-
-      const retryTimer = window.setInterval(() => {
-        retryCount += 1;
-        scheduleMarking();
-
-        if (retryCount > 20) {
-          window.clearInterval(retryTimer);
-        }
-      }, 500);
+      window.setInterval(scheduleMarking, 500);
     })();
   </script>
   <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
