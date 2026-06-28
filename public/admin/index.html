@@ -128,6 +128,97 @@
 <body>
   <script>
     (() => {
+      const storageName = 'entry-view';
+      const storeName = 'ui-settings';
+      const reloadKey = 'cms:edit-focus-reloaded';
+
+      function requestToPromise(request) {
+        return new Promise((resolve, reject) => {
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      function openDatabase(name) {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(name);
+
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+          request.onblocked = () => reject(new Error('IndexedDB open blocked'));
+        });
+      }
+
+      async function updateDatabase(name) {
+        const db = await openDatabase(name);
+
+        try {
+          if (!Array.from(db.objectStoreNames).includes(storeName)) {
+            return false;
+          }
+
+          const transaction = db.transaction(storeName, 'readwrite');
+          const store = transaction.objectStore(storeName);
+          const current = (await requestToPromise(store.get(storageName))) || {};
+          const next = {
+            ...current,
+            showPreview: false,
+            paneStates: {},
+          };
+
+          if (current.showPreview === false && JSON.stringify(current.paneStates ?? {}) === '{}') {
+            return false;
+          }
+
+          store.put(next, storageName);
+
+          await new Promise((resolve, reject) => {
+            transaction.oncomplete = resolve;
+            transaction.onerror = () => reject(transaction.error);
+            transaction.onabort = () => reject(transaction.error);
+          });
+
+          return true;
+        } finally {
+          db.close();
+        }
+      }
+
+      async function forceEditFocusedSettings() {
+        if (!indexedDB.databases) {
+          return false;
+        }
+
+        const databases = await indexedDB.databases();
+        const results = await Promise.allSettled(
+          databases
+            .map(({ name }) => name)
+            .filter(Boolean)
+            .map((name) => updateDatabase(name)),
+        );
+
+        return results.some((result) => result.status === 'fulfilled' && result.value);
+      }
+
+      async function applySettings() {
+        try {
+          const changed = await forceEditFocusedSettings();
+
+          if (changed && sessionStorage.getItem(reloadKey) !== 'true') {
+            sessionStorage.setItem(reloadKey, 'true');
+            window.location.reload();
+          }
+        } catch {
+          // Sveltia can still load normally if the browser blocks IndexedDB inspection.
+        }
+      }
+
+      applySettings();
+      window.setInterval(applySettings, 1000);
+    })();
+  </script>
+  <script>
+    (() => {
       let scheduled = false;
 
       function paneContainer(pane) {
