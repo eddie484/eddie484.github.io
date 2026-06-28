@@ -48,37 +48,46 @@ function isActive(item: CategoryItem) {
 }
 
 const displayItems = flattenDisplayItems(CATEGORY_TREE);
+const cmsNewUrl = 'https://eddie484.github.io/admin/#/collections/blog/new';
+const cmsManageUrl = 'https://eddie484.github.io/admin/#/collections/blog';
 ---
 
 <aside class="category-sidebar" aria-label="카테고리">
-	<div class="category-sidebar__title">카테고리</div>
-	<nav>
-		<a class:list={['category-link', 'category-link--all', { active: !activeCategoryId }]} href="/blog/">
-			<span class="category-icon">▢</span>
-			<span>전체보기</span>
-			<span class="post-count">({posts.length})</span>
-		</a>
-		<ul class="category-tree">
-			{
-				displayItems.map((item) =>
-					item.type === 'divider' ? (
-						<li class="category-divider" aria-hidden="true"></li>
-					) : (
-						<li>
-							<a
-								class:list={['category-link', { active: isActive(item.category) }]}
-								href={getCategoryById(item.category.id) ? getCategoryUrl(getCategoryById(item.category.id)!) : '/blog/'}
-								style={`--depth: ${item.depth}`}
-							>
-								<span class="category-icon">{renderIcon(item.category)}</span>
-								<span>{item.category.label}</span>
-							</a>
-						</li>
-					),
-				)
-			}
-		</ul>
-	</nav>
+	<div class="category-panel">
+		<div class="category-sidebar__title">카테고리</div>
+		<nav>
+			<a class:list={['category-link', 'category-link--all', { active: !activeCategoryId }]} href="/blog/">
+				<span class="category-icon">▢</span>
+				<span>전체보기</span>
+				<span class="post-count">({posts.length})</span>
+			</a>
+			<ul class="category-tree">
+				{
+					displayItems.map((item) =>
+						item.type === 'divider' ? (
+							<li class="category-divider" aria-hidden="true"></li>
+						) : (
+							<li>
+								<a
+									class:list={['category-link', { active: isActive(item.category) }]}
+									href={getCategoryById(item.category.id) ? getCategoryUrl(getCategoryById(item.category.id)!) : '/blog/'}
+									style={`--depth: ${item.depth}`}
+								>
+									<span class="category-icon">{renderIcon(item.category)}</span>
+									<span>{item.category.label}</span>
+								</a>
+							</li>
+						),
+					)
+				}
+			</ul>
+		</nav>
+	</div>
+	<div class="sidebar-admin-actions" data-admin-only hidden>
+		<a href={cmsNewUrl}>✎ 글쓰기</a>
+		<span aria-hidden="true">|</span>
+		<a href={cmsManageUrl}>관리</a>
+	</div>
 </aside>
 
 <style>
@@ -86,9 +95,12 @@ const displayItems = flattenDisplayItems(CATEGORY_TREE);
 		width: var(--sidebar-width);
 		flex: 0 0 var(--sidebar-width);
 		align-self: flex-start;
+		font-size: 13px;
+	}
+
+	.category-panel {
 		border: 1px solid var(--line);
 		background: var(--surface);
-		font-size: 13px;
 	}
 
 	.category-sidebar__title {
@@ -148,5 +160,34 @@ const displayItems = flattenDisplayItems(CATEGORY_TREE);
 		height: 1px;
 		margin: 9px 0;
 		border-top: 1px dashed var(--line-strong);
+	}
+
+	.sidebar-admin-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 13px;
+		padding: 0 12px;
+		color: var(--muted);
+	}
+
+	.sidebar-admin-actions[hidden] {
+		display: none !important;
+	}
+
+	.sidebar-admin-actions a {
+		color: var(--side-ink);
+		font-size: 13px;
+		font-weight: 700;
+		text-decoration: none;
+	}
+
+	.sidebar-admin-actions a:hover {
+		color: var(--accent);
+	}
+
+	.sidebar-admin-actions span {
+		color: var(--muted-light);
+		font-size: 12px;
 	}
 </style>

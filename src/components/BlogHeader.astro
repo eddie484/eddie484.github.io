@@ -27,6 +27,9 @@ const bannerStyle = BANNER.image
 ---
 
 <header class="blog-header">
+	<div class="admin-bar" aria-label="관리자 메뉴">
+		<button class="admin-toggle" type="button" data-admin-toggle aria-pressed="false">로그인</button>
+	</div>
 	<a class="blog-banner" href="/blog/" style={bannerStyle} aria-label={`${BLOG_TITLE} 메인으로 이동`}>
 		<span>{BLOG_TITLE}</span>
 	</a>
@@ -49,11 +52,95 @@ const bannerStyle = BANNER.image
 	</nav>
 </header>
 
+<script is:inline>
+	(() => {
+		const storageKey = 'blog:admin-mode';
+		const toggle = document.querySelector('[data-admin-toggle]');
+
+		function readAdminMode() {
+			try {
+				return localStorage.getItem(storageKey) === 'true';
+			} catch {
+				return false;
+			}
+		}
+
+		function writeAdminMode(isAdmin) {
+			try {
+				if (isAdmin) {
+					localStorage.setItem(storageKey, 'true');
+				} else {
+					localStorage.removeItem(storageKey);
+				}
+			} catch {
+				// This is only a convenience toggle, so storage failures can fail quietly.
+			}
+		}
+
+		function applyAdminMode(isAdmin) {
+			document.documentElement.classList.toggle('admin-mode', isAdmin);
+			document.body?.classList.toggle('admin-mode', isAdmin);
+
+			document.querySelectorAll('[data-admin-only]').forEach((item) => {
+				item.hidden = !isAdmin;
+			});
+
+			if (toggle) {
+				toggle.textContent = isAdmin ? '로그아웃' : '로그인';
+				toggle.setAttribute('aria-pressed', String(isAdmin));
+			}
+		}
+
+		applyAdminMode(readAdminMode());
+		document.addEventListener('DOMContentLoaded', () => {
+			applyAdminMode(readAdminMode());
+		});
+
+		toggle?.addEventListener('click', () => {
+			const nextAdminMode = !readAdminMode();
+			writeAdminMode(nextAdminMode);
+			applyAdminMode(nextAdminMode);
+		});
+	})();
+</script>
+
 <style>
 	.blog-header {
+		position: relative;
 		width: var(--site-width);
 		min-width: var(--site-width);
 		margin: 0 auto;
+	}
+
+	.admin-bar {
+		position: absolute;
+		top: -24px;
+		right: 0;
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.admin-toggle {
+		height: 22px;
+		padding: 0 8px;
+		border: 1px solid transparent;
+		background: transparent;
+		color: var(--muted);
+		font: inherit;
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 20px;
+		cursor: pointer;
+	}
+
+	.admin-toggle:hover,
+	.admin-toggle[aria-pressed='true'] {
+		color: var(--accent);
+	}
+
+	.admin-toggle:focus-visible {
+		border-color: var(--accent);
+		outline: 0;
 	}
 
 	.blog-banner {

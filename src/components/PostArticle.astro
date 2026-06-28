@@ -8,21 +8,135 @@ interface Props {
 
 const { post } = Astro.props;
 const category = getPostCategory(post);
+const encodedPostId = post.id.split('/').map(encodeURIComponent).join('/');
+const cmsEditUrl = new URL(
+	`/admin/#/collections/blog/entries/${encodedPostId}`,
+	Astro.site ?? Astro.url.origin,
+).toString();
 ---
 
 <article class="post-article">
 	<header class="post-article__header">
 		<div class="post-category">{category?.label ?? '카테고리'}</div>
 		<h1>{post.data.title}</h1>
-		<div class="post-meta">
-			<span class="post-author">{BLOG_AUTHOR}</span>
-			<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+		<div class="post-meta-row">
+			<div class="post-meta">
+				<span class="post-author">{BLOG_AUTHOR}</span>
+				<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+			</div>
+			<div class="post-actions" aria-label="글 작업">
+				<button class="post-action-button" type="button" data-copy-url>URL 복사</button>
+				<div class="post-admin-menu" data-admin-only data-post-menu hidden>
+					<button
+						class="post-menu-toggle"
+						type="button"
+						aria-label="글 관리 메뉴 열기"
+						aria-expanded="false"
+						data-post-menu-toggle
+					>
+						⋮
+					</button>
+					<div class="post-menu-panel" data-post-menu-panel hidden>
+						<a class="post-menu-item" href={cmsEditUrl}>수정하기</a>
+					</div>
+				</div>
+			</div>
 		</div>
 	</header>
 	<div class="post-body">
 		<slot />
 	</div>
 </article>
+
+<script is:inline>
+	(() => {
+		async function copyWithFallback(text) {
+			if (navigator.clipboard?.writeText) {
+				try {
+					await navigator.clipboard.writeText(text);
+					return;
+				} catch {
+					// Fall back to the textarea method below.
+				}
+			}
+
+			const textarea = document.createElement('textarea');
+			textarea.value = text;
+			textarea.setAttribute('readonly', '');
+			textarea.style.position = 'fixed';
+			textarea.style.top = '-999px';
+			document.body.append(textarea);
+			textarea.select();
+
+			const copied = document.execCommand('copy');
+			textarea.remove();
+
+			if (!copied) {
+				throw new Error('Copy failed');
+			}
+		}
+
+		document.querySelectorAll('[data-copy-url]').forEach((button) => {
+			const defaultLabel = button.textContent || 'URL 복사';
+			let resetTimer;
+
+			button.addEventListener('click', async () => {
+				window.clearTimeout(resetTimer);
+				button.textContent = '복사됨';
+				resetTimer = window.setTimeout(() => {
+					button.textContent = defaultLabel;
+				}, 1400);
+
+				try {
+					await copyWithFallback(window.location.href);
+				} catch {
+					window.clearTimeout(resetTimer);
+					button.textContent = '복사 실패';
+					resetTimer = window.setTimeout(() => {
+						button.textContent = defaultLabel;
+					}, 1400);
+				}
+			});
+		});
+
+		document.querySelectorAll('[data-post-menu]').forEach((menu) => {
+			const toggle = menu.querySelector('[data-post-menu-toggle]');
+			const panel = menu.querySelector('[data-post-menu-panel]');
+
+			if (!toggle || !panel) {
+				return;
+			}
+
+			function closeMenu() {
+				panel.hidden = true;
+				toggle.setAttribute('aria-expanded', 'false');
+			}
+
+			toggle.addEventListener('click', (event) => {
+				event.stopPropagation();
+				const shouldOpen = panel.hidden;
+
+				document.querySelectorAll('[data-post-menu-panel]').forEach((otherPanel) => {
+					otherPanel.hidden = true;
+				});
+
+				panel.hidden = !shouldOpen;
+				toggle.setAttribute('aria-expanded', String(shouldOpen));
+			});
+
+			panel.addEventListener('click', (event) => {
+				event.stopPropagation();
+			});
+
+			document.addEventListener('click', closeMenu);
+			document.addEventListener('keydown', (event) => {
+				if (event.key === 'Escape') {
+					closeMenu();
+				}
+			});
+		});
+	})();
+</script>
 
 <style>
 	.post-article__header {
@@ -44,6 +158,14 @@ const category = getPostCategory(post);
 		line-height: 1.45;
 	}
 
+	.post-meta-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+		min-height: 32px;
+	}
+
 	.post-meta {
 		display: flex;
 		gap: 8px;
@@ -55,6 +177,87 @@ const category = getPostCategory(post);
 	.post-author {
 		color: var(--ink);
 		font-weight: 700;
+	}
+
+	.post-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-left: auto;
+	}
+
+	.post-action-button,
+	.post-menu-toggle {
+		border: 0;
+		background: transparent;
+		color: var(--muted);
+		font: inherit;
+		font-size: 13px;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	.post-action-button {
+		min-width: 56px;
+		padding: 4px 0;
+		text-align: center;
+	}
+
+	.post-menu-toggle {
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		font-size: 24px;
+		line-height: 24px;
+	}
+
+	.post-action-button:hover,
+	.post-menu-toggle:hover,
+	.post-menu-toggle[aria-expanded='true'] {
+		color: var(--accent);
+	}
+
+	.post-action-button:focus-visible,
+	.post-menu-toggle:focus-visible,
+	.post-menu-item:focus-visible {
+		outline: 1px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	.post-admin-menu {
+		position: relative;
+	}
+
+	.post-admin-menu[hidden],
+	.post-menu-panel[hidden] {
+		display: none !important;
+	}
+
+	.post-menu-panel {
+		position: absolute;
+		top: 34px;
+		right: 0;
+		z-index: 10;
+		width: 154px;
+		border: 1px solid var(--line-strong);
+		border-radius: 3px;
+		background: var(--surface);
+		box-shadow: 0 8px 20px rgba(36, 50, 57, 0.12);
+	}
+
+	.post-menu-item {
+		display: block;
+		padding: 11px 15px;
+		color: var(--side-ink);
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 1.4;
+		text-decoration: none;
+	}
+
+	.post-menu-item:hover {
+		background: var(--surface-soft);
+		color: var(--accent);
 	}
 
 	.post-body {
