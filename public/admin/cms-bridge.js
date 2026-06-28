@@ -1,5 +1,6 @@
 (() => {
   const PENDING_KEY = 'blog-writer:pending-entry';
+  const DEFAULTS_APPLIED_KEY = 'blog-writer:defaults-applied';
   const CATEGORY_LABELS = {
     projects: '프로젝트',
     'project-a': '프로젝트 A',
@@ -17,12 +18,93 @@
 
   const isNewBlogEntry = () => window.location.hash.includes('/collections/blog/new');
 
+  const getDefaultsApplied = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(DEFAULTS_APPLIED_KEY) || 'null');
+    } catch {
+      return null;
+    }
+  };
+
   const getPending = () => {
     try {
       return JSON.parse(localStorage.getItem(PENDING_KEY) || 'null');
     } catch {
       return null;
     }
+  };
+
+  const quoteYaml = (value) => JSON.stringify(String(value ?? ''));
+
+  const patchInlineFieldDefault = (config, fieldName, value) => {
+    const fieldPattern = fieldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`(-\\s*\\{(?=[^}\\n]*\\bname:\\s*${fieldPattern}\\b)[^}\\n]*)(\\s*\\})`);
+
+    return config.replace(pattern, (match, start, end) => {
+      const withoutDefault = start.replace(/,\s*default:\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^,}]+)/, '');
+      return `${withoutDefault}, default: ${quoteYaml(value)}${end}`;
+    });
+  };
+
+  const patchCategoryDefault = (config, value) => {
+    const categoryDefaultPattern = /(name:\s*category\s*\n\s*widget:\s*select\s*\n\s*)default:\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^\n]+)/;
+
+    if (categoryDefaultPattern.test(config)) {
+      return config.replace(categoryDefaultPattern, `$1default: ${quoteYaml(value)}`);
+    }
+
+    return config.replace(/(name:\s*category\s*\n\s*widget:\s*select)/, `$1\n        default: ${quoteYaml(value)}`);
+  };
+
+  const patchConfigWithPendingEntry = (config, pending) => {
+    let patched = config;
+
+    patched = patchInlineFieldDefault(patched, 'title', pending.title || '');
+    patched = patchInlineFieldDefault(patched, 'description', pending.description || pending.title || '');
+    patched = patchCategoryDefault(patched, pending.category || 'notes');
+    patched = patchInlineFieldDefault(patched, 'pubDate', pending.pubDate || '');
+    patched = patchInlineFieldDefault(patched, 'body', pending.body || '');
+
+    return patched;
+  };
+
+  const installConfigPrefill = () => {
+    if (!window.fetch || window.__writerBridgeFetchInstalled) return;
+
+    const nativeFetch = window.fetch.bind(window);
+    window.__writerBridgeFetchInstalled = true;
+
+    window.fetch = async (...args) => {
+      const response = await nativeFetch(...args);
+      const request = args[0];
+      const requestUrl = typeof request === 'string' ? request : request?.url || '';
+      const url = new URL(requestUrl, window.location.href);
+      const isConfigRequest = url.pathname.endsWith('/config.yml') || url.pathname.endsWith('/config.yaml');
+      const pending = getPending();
+
+      if (!isConfigRequest || !pending || !isNewBlogEntry()) {
+        return response;
+      }
+
+      const config = await response.clone().text();
+      const patchedConfig = patchConfigWithPendingEntry(config, pending);
+
+      sessionStorage.setItem(
+        DEFAULTS_APPLIED_KEY,
+        JSON.stringify({
+          at: Date.now(),
+          title: pending.title || '',
+        }),
+      );
+
+      return new Response(patchedConfig, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          'Content-Type': 'text/yaml; charset=utf-8',
+        },
+      });
+    };
   };
 
   const visible = (element) => {
@@ -215,6 +297,15 @@
     const pending = getPending();
     if (!pending) return;
 
+    if (getDefaultsApplied()) {
+      showNotice('초안을 CMS 새 글에 넣었습니다. 확인 후 Save를 눌러주세요.');
+      setTimeout(() => {
+        localStorage.removeItem(PENDING_KEY);
+        sessionStorage.removeItem(DEFAULTS_APPLIED_KEY);
+      }, 8000);
+      return;
+    }
+
     running = true;
     showNotice('글쓰기 페이지의 초안을 CMS에 입력하는 중입니다.');
 
@@ -241,6 +332,7 @@
 
   window.addEventListener('hashchange', importPendingEntry);
   window.addEventListener('load', importPendingEntry);
+  installConfigPrefill();
   const scheduleImport = () => {
     if (!getPending() || !isNewBlogEntry()) return;
     clearTimeout(window.__writerBridgeTimer);
