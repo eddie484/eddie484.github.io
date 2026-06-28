@@ -55,21 +55,21 @@
     }
 
     #nc-root [data-cms-body-field='true'] textarea,
-    #nc-root [data-cms-body-field='true'] iframe,
     #nc-root [data-cms-body-field='true'] [contenteditable='true'],
     #nc-root [data-cms-body-field='true'] [role='textbox'],
+    #nc-root [data-cms-body-field='true'] [data-cms-body-editor='true'],
     #nc-root [data-cms-body-field='true'] .cm-editor,
     #nc-root [data-cms-body-field='true'] .cm-scroller,
     #nc-root [data-cms-body-field='true'] .cm-content,
     #nc-root [data-cms-body-field='true'] .ProseMirror,
-    #nc-root [data-cms-body-field='true'] [class*='CodeMirror'],
-    #nc-root [data-cms-body-field='true'] [class*='editor' i] {
+    #nc-root [data-cms-body-field='true'] [class*='CodeMirror'] {
       min-height: var(--cms-writing-min-height) !important;
     }
 
     #nc-root [data-cms-body-field='true'] textarea,
     #nc-root [data-cms-body-field='true'] [contenteditable='true'],
     #nc-root [data-cms-body-field='true'] [role='textbox'],
+    #nc-root [data-cms-body-field='true'] [data-cms-body-editor='true'],
     #nc-root [data-cms-body-field='true'] .cm-content,
     #nc-root [data-cms-body-field='true'] .ProseMirror {
       padding: clamp(18px, 2.5vw, 34px) !important;
@@ -98,13 +98,11 @@
       const labelPattern = /^(body|본문)\s*\*?$/i;
       const editorSelector = [
         'textarea',
-        'iframe',
         '[contenteditable="true"]',
         '[role="textbox"]',
         '.cm-editor',
         '.ProseMirror',
         '[class*="CodeMirror"]',
-        '[class*="editor" i]',
       ].join(',');
 
       let scheduled = false;
@@ -174,6 +172,12 @@
 
         if (field.getAttribute('data-cms-body-field') !== 'true') {
           field.setAttribute('data-cms-body-field', 'true');
+        }
+
+        const editor = isEditorElement(field) ? field : field.querySelector(editorSelector);
+
+        if (editor && editor.getAttribute('data-cms-body-editor') !== 'true') {
+          editor.setAttribute('data-cms-body-editor', 'true');
         }
 
         const form = field.closest('form');
