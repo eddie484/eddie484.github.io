@@ -78,24 +78,13 @@
       const response = await nativeFetch(...args);
       const request = args[0];
       const requestUrl = typeof request === 'string' ? request : request?.url || '';
-      const url = new URL(requestUrl, window.location.href);
-      const isConfigRequest = url.pathname.endsWith('/config.yml') || url.pathname.endsWith('/config.yaml');
-      const pending = getPending();
 
-      if (!isConfigRequest || !pending || !isNewBlogEntry()) {
+      if (!shouldPatchConfigRequest(requestUrl)) {
         return response;
       }
 
       const config = await response.clone().text();
-      const patchedConfig = patchConfigWithPendingEntry(config, pending);
-
-      sessionStorage.setItem(
-        DEFAULTS_APPLIED_KEY,
-        JSON.stringify({
-          at: Date.now(),
-          title: pending.title || '',
-        }),
-      );
+      const patchedConfig = patchConfigText(config);
 
       return new Response(patchedConfig, {
         status: response.status,
@@ -105,6 +94,79 @@
         },
       });
     };
+  };
+
+  const shouldPatchConfigRequest = (requestUrl) => {
+    const url = new URL(requestUrl || '', window.location.href);
+    const isConfigRequest = url.pathname.endsWith('/config.yml') || url.pathname.endsWith('/config.yaml');
+    return isConfigRequest && !!getPending() && isNewBlogEntry();
+  };
+
+  const markDefaultsApplied = (pending) => {
+    sessionStorage.setItem(
+      DEFAULTS_APPLIED_KEY,
+      JSON.stringify({
+        at: Date.now(),
+        title: pending.title || '',
+      }),
+    );
+  };
+
+  const patchConfigText = (config) => {
+    const pending = getPending();
+    if (!pending) return config;
+    markDefaultsApplied(pending);
+    return patchConfigWithPendingEntry(config, pending);
+  };
+
+  const installXHRPrefill = () => {
+    if (!window.XMLHttpRequest || window.__writerBridgeXHRInstalled) return;
+
+    const NativeXHR = window.XMLHttpRequest;
+    window.__writerBridgeXHRInstalled = true;
+
+    window.XMLHttpRequest = function PatchedXMLHttpRequest() {
+      const xhr = new NativeXHR();
+      let requestUrl = '';
+      let patchedText;
+      let patched = false;
+
+      const exposePatchedText = () => {
+        if (patched || !shouldPatchConfigRequest(requestUrl)) return;
+        if (xhr.readyState < 3) return;
+
+        try {
+          patchedText = patchConfigText(xhr.responseText || '');
+          Object.defineProperty(xhr, 'responseText', {
+            configurable: true,
+            get: () => patchedText,
+          });
+          Object.defineProperty(xhr, 'response', {
+            configurable: true,
+            get: () => patchedText,
+          });
+          patched = true;
+        } catch {
+          patched = false;
+        }
+      };
+
+      const nativeOpen = xhr.open;
+      xhr.open = function open(method, url, ...rest) {
+        requestUrl = String(url || '');
+        return nativeOpen.call(xhr, method, url, ...rest);
+      };
+
+      xhr.addEventListener('readystatechange', exposePatchedText);
+      xhr.addEventListener('load', exposePatchedText);
+
+      return xhr;
+    };
+
+    Object.entries(NativeXHR).forEach(([key, value]) => {
+      window.XMLHttpRequest[key] = value;
+    });
+    window.XMLHttpRequest.prototype = NativeXHR.prototype;
   };
 
   const visible = (element) => {
@@ -333,6 +395,7 @@
   window.addEventListener('hashchange', importPendingEntry);
   window.addEventListener('load', importPendingEntry);
   installConfigPrefill();
+  installXHRPrefill();
   const scheduleImport = () => {
     if (!getPending() || !isNewBlogEntry()) return;
     clearTimeout(window.__writerBridgeTimer);
