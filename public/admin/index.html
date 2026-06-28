@@ -17,6 +17,30 @@
       margin-inline: auto !important;
     }
 
+    html[data-cms-focus-edit='true'] #nc-root [data-cms-entry-layout='true'] {
+      grid-template-columns: minmax(0, 1fr) !important;
+      justify-content: center !important;
+    }
+
+    html[data-cms-focus-edit='true'] #nc-root [data-cms-edit-pane='true'] {
+      width: min(100%, 1280px) !important;
+      max-width: 1280px !important;
+      flex: 0 1 1280px !important;
+      margin-inline: auto !important;
+    }
+
+    html[data-cms-focus-edit='true'] #nc-root [data-cms-preview-pane='true'],
+    html[data-cms-focus-edit='true'] #nc-root [data-cms-splitter='true'] {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      flex: 0 0 0 !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
     #nc-root [data-cms-body-field='true'] {
       grid-column: 1 / -1 !important;
       width: min(100%, var(--cms-writing-max-width)) !important;
@@ -106,6 +130,11 @@
       ].join(',');
 
       let scheduled = false;
+      let retryCount = 0;
+
+      function normalizeText(text) {
+        return (text || '').replace(/\s+/g, ' ').trim();
+      }
 
       function isEditorElement(element) {
         return element.matches?.(editorSelector) || false;
@@ -116,11 +145,11 @@
       }
 
       function isBodyLabel(element) {
-        const text = (element.textContent || '').trim();
-        const ariaLabel = (element.getAttribute?.('aria-label') || '').trim();
-        const htmlFor = (element.getAttribute?.('for') || '').trim();
-        const name = (element.getAttribute?.('name') || '').trim();
-        const id = (element.getAttribute?.('id') || '').trim();
+        const text = normalizeText(element.textContent);
+        const ariaLabel = normalizeText(element.getAttribute?.('aria-label'));
+        const htmlFor = normalizeText(element.getAttribute?.('for'));
+        const name = normalizeText(element.getAttribute?.('name'));
+        const id = normalizeText(element.getAttribute?.('id'));
 
         return (
           labelPattern.test(text) ||
@@ -131,14 +160,123 @@
         );
       }
 
+      function isVisible(element) {
+        const rect = element.getBoundingClientRect?.();
+
+        return Boolean(rect && rect.width > 0 && rect.height > 0);
+      }
+
+      function hasExactText(element, expectedText) {
+        const expected = normalizeText(expectedText).toLowerCase();
+
+        return [...element.querySelectorAll('*')].some(
+          (item) => normalizeText(item.textContent).toLowerCase() === expected && isVisible(item),
+        );
+      }
+
+      function findPaneByTitle(root, title) {
+        const oppositeTitle = title === 'Preview' ? 'Edit' : 'Preview';
+        const titleElement = [...root.querySelectorAll('*')].find(
+          (element) => normalizeText(element.textContent) === title && isVisible(element),
+        );
+
+        if (!titleElement) {
+          return null;
+        }
+
+        let current = titleElement.parentElement;
+
+        for (let depth = 0; current && current !== root && depth < 12; depth += 1) {
+          const rect = current.getBoundingClientRect();
+
+          if (
+            rect.width > 260 &&
+            rect.height > window.innerHeight * 0.5 &&
+            !hasExactText(current, oppositeTitle)
+          ) {
+            return current;
+          }
+
+          current = current.parentElement;
+        }
+
+        return null;
+      }
+
+      function findSharedLayout(root, first, second) {
+        let current = first?.parentElement;
+
+        while (current && current !== root) {
+          if (current.contains(second)) {
+            return current;
+          }
+
+          current = current.parentElement;
+        }
+
+        return null;
+      }
+
+      function markSplitters(layout, editPane, previewPane) {
+        if (!layout || !editPane || !previewPane) {
+          return;
+        }
+
+        const editRect = editPane.getBoundingClientRect();
+        const previewRect = previewPane.getBoundingClientRect();
+        const gutterStart = Math.min(editRect.right, previewRect.left) - 42;
+        const gutterEnd = Math.max(editRect.right, previewRect.left) + 42;
+
+        layout.querySelectorAll('*').forEach((element) => {
+          const rect = element.getBoundingClientRect();
+          const isGutter =
+            rect.width > 0 &&
+            rect.width <= 42 &&
+            rect.height > window.innerHeight * 0.35 &&
+            rect.left >= gutterStart &&
+            rect.right <= gutterEnd;
+
+          if (isGutter && element.getAttribute('data-cms-splitter') !== 'true') {
+            element.setAttribute('data-cms-splitter', 'true');
+          }
+        });
+      }
+
+      function markEntryLayout(root) {
+        const editPane = findPaneByTitle(root, 'Edit');
+        const previewPane = findPaneByTitle(root, 'Preview');
+        const layout = findSharedLayout(root, editPane, previewPane);
+
+        if (!editPane || !previewPane || !layout) {
+          return;
+        }
+
+        document.documentElement.setAttribute('data-cms-focus-edit', 'true');
+
+        if (editPane.getAttribute('data-cms-edit-pane') !== 'true') {
+          editPane.setAttribute('data-cms-edit-pane', 'true');
+        }
+
+        if (previewPane.getAttribute('data-cms-preview-pane') !== 'true') {
+          previewPane.setAttribute('data-cms-preview-pane', 'true');
+        }
+
+        if (layout.getAttribute('data-cms-entry-layout') !== 'true') {
+          layout.setAttribute('data-cms-entry-layout', 'true');
+        }
+
+        markSplitters(layout, editPane, previewPane);
+      }
+
       function findFieldRoot(root, start) {
         let current = isEditorElement(start) ? start.parentElement : start;
 
-        for (let depth = 0; current && current !== root && depth < 9; depth += 1) {
+        for (let depth = 0; current && current !== root && depth < 12; depth += 1) {
           if (hasEditor(current)) {
-            const labelCount = current.querySelectorAll?.('label, legend').length || 0;
+            const rect = current.getBoundingClientRect();
+            const containsPreview = hasExactText(current, 'Preview');
 
-            if (labelCount <= 2 || isBodyLabel(current)) {
+            if (rect.width > 260 && rect.height > 120 && !containsPreview) {
               return current;
             }
           }
@@ -157,6 +295,8 @@
         if (!root) {
           return;
         }
+
+        markEntryLayout(root);
 
         const candidates = [
           ...root.querySelectorAll('label, legend, [aria-label], [name], [id], [for]'),
@@ -205,6 +345,15 @@
       window.addEventListener('hashchange', scheduleMarking);
       window.addEventListener('load', scheduleMarking);
       scheduleMarking();
+
+      const retryTimer = window.setInterval(() => {
+        retryCount += 1;
+        scheduleMarking();
+
+        if (retryCount > 20) {
+          window.clearInterval(retryTimer);
+        }
+      }, 500);
     })();
   </script>
   <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
