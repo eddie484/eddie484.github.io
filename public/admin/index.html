@@ -5,8 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <title>Content Manager</title>
+  <style>
+    #nc-root {
+      --cms-writing-max-width: 1120px;
+      --cms-writing-min-height: clamp(520px, 68vh, 920px);
+    }
+
+    #nc-root [data-cms-writing-form='true'] {
+      width: min(100%, 1280px) !important;
+      max-width: 1280px !important;
+      margin-inline: auto !important;
+    }
+
+    #nc-root [data-cms-body-field='true'] {
+      grid-column: 1 / -1 !important;
+      width: min(100%, var(--cms-writing-max-width)) !important;
+      max-width: var(--cms-writing-max-width) !important;
+      margin: clamp(24px, 4vw, 52px) auto !important;
+      padding: clamp(16px, 2.5vw, 28px) !important;
+      border: 1px solid color-mix(in srgb, var(--sui-border-color, #d4d8dd), transparent 10%) !important;
+      border-radius: 18px !important;
+      background: var(--sui-content-background-color, #fff) !important;
+      box-shadow: 0 22px 70px rgb(15 23 42 / 10%) !important;
+      box-sizing: border-box !important;
+    }
+
+    #nc-root [data-cms-body-field='true'],
+    #nc-root [data-cms-body-field='true'] * {
+      box-sizing: border-box !important;
+    }
+
+    #nc-root [data-cms-body-field='true'] > * {
+      max-width: none !important;
+    }
+
+    #nc-root [data-cms-body-field='true'] label,
+    #nc-root [data-cms-body-field='true'] legend {
+      margin-bottom: 12px !important;
+      font-size: 15px !important;
+      font-weight: 700 !important;
+    }
+
+    #nc-root [data-cms-body-field='true'] [role='toolbar'],
+    #nc-root [data-cms-body-field='true'] [class*='toolbar' i] {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 20 !important;
+      border-radius: 12px 12px 0 0 !important;
+    }
+
+    #nc-root [data-cms-body-field='true'] textarea,
+    #nc-root [data-cms-body-field='true'] iframe,
+    #nc-root [data-cms-body-field='true'] [contenteditable='true'],
+    #nc-root [data-cms-body-field='true'] [role='textbox'],
+    #nc-root [data-cms-body-field='true'] .cm-editor,
+    #nc-root [data-cms-body-field='true'] .cm-scroller,
+    #nc-root [data-cms-body-field='true'] .cm-content,
+    #nc-root [data-cms-body-field='true'] .ProseMirror,
+    #nc-root [data-cms-body-field='true'] [class*='CodeMirror'],
+    #nc-root [data-cms-body-field='true'] [class*='editor' i] {
+      min-height: var(--cms-writing-min-height) !important;
+    }
+
+    #nc-root [data-cms-body-field='true'] textarea,
+    #nc-root [data-cms-body-field='true'] [contenteditable='true'],
+    #nc-root [data-cms-body-field='true'] [role='textbox'],
+    #nc-root [data-cms-body-field='true'] .cm-content,
+    #nc-root [data-cms-body-field='true'] .ProseMirror {
+      padding: clamp(18px, 2.5vw, 34px) !important;
+      font-size: 17px !important;
+      line-height: 1.85 !important;
+    }
+
+    @media (width < 760px) {
+      #nc-root {
+        --cms-writing-min-height: 62vh;
+      }
+
+      #nc-root [data-cms-body-field='true'] {
+        width: 100% !important;
+        margin-block: 18px !important;
+        padding: 12px !important;
+        border-radius: 12px !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
-  <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js" type="module"></script>
+  <script>
+    (() => {
+      const labelPattern = /^(body|본문)\s*\*?$/i;
+      const editorSelector = [
+        'textarea',
+        'iframe',
+        '[contenteditable="true"]',
+        '[role="textbox"]',
+        '.cm-editor',
+        '.ProseMirror',
+        '[class*="CodeMirror"]',
+        '[class*="editor" i]',
+      ].join(',');
+
+      let scheduled = false;
+
+      function isEditorElement(element) {
+        return element.matches?.(editorSelector) || false;
+      }
+
+      function hasEditor(element) {
+        return isEditorElement(element) || Boolean(element.querySelector?.(editorSelector));
+      }
+
+      function isBodyLabel(element) {
+        const text = (element.textContent || '').trim();
+        const ariaLabel = (element.getAttribute?.('aria-label') || '').trim();
+        const htmlFor = (element.getAttribute?.('for') || '').trim();
+        const name = (element.getAttribute?.('name') || '').trim();
+        const id = (element.getAttribute?.('id') || '').trim();
+
+        return (
+          labelPattern.test(text) ||
+          labelPattern.test(ariaLabel) ||
+          /^body$/i.test(htmlFor) ||
+          /^body$/i.test(name) ||
+          /^body$/i.test(id)
+        );
+      }
+
+      function findFieldRoot(root, start) {
+        let current = isEditorElement(start) ? start.parentElement : start;
+
+        for (let depth = 0; current && current !== root && depth < 9; depth += 1) {
+          if (hasEditor(current)) {
+            const labelCount = current.querySelectorAll?.('label, legend').length || 0;
+
+            if (labelCount <= 2 || isBodyLabel(current)) {
+              return current;
+            }
+          }
+
+          current = current.parentElement;
+        }
+
+        return null;
+      }
+
+      function markBodyEditor() {
+        scheduled = false;
+
+        const root = document.getElementById('nc-root');
+
+        if (!root) {
+          return;
+        }
+
+        const candidates = [
+          ...root.querySelectorAll('label, legend, [aria-label], [name], [id], [for]'),
+        ].filter(isBodyLabel);
+
+        const field = candidates
+          .map((candidate) => findFieldRoot(root, candidate))
+          .find(Boolean);
+
+        if (!field) {
+          return;
+        }
+
+        if (field.getAttribute('data-cms-body-field') !== 'true') {
+          field.setAttribute('data-cms-body-field', 'true');
+        }
+
+        const form = field.closest('form');
+
+        if (form && form.getAttribute('data-cms-writing-form') !== 'true') {
+          form.setAttribute('data-cms-writing-form', 'true');
+        }
+      }
+
+      function scheduleMarking() {
+        if (scheduled) {
+          return;
+        }
+
+        scheduled = true;
+        requestAnimationFrame(markBodyEditor);
+      }
+
+      new MutationObserver(scheduleMarking).observe(document.documentElement, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+      });
+
+      window.addEventListener('hashchange', scheduleMarking);
+      window.addEventListener('load', scheduleMarking);
+      scheduleMarking();
+    })();
+  </script>
+  <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
 </body>
 </html>
