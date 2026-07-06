@@ -19,9 +19,8 @@ collections:
         widget: select
         options:
           - { label: 프로젝트, value: projects }
-          - { label: 프로젝트 A, value: project-a }
-          - { label: 설계, value: design }
-          - { label: 잡설, value: notes }
+          - { label: customISA to DOOM, value: customisa2doom }
+          - { label: 일지, value: journal }
           - { label: 게임, value: games }
           - { label: 게임A, value: game-a }
           - { label: 게임B, value: game-b }

@@ -372,9 +372,8 @@
     <div class="meta-strip" aria-label="글 설정">
       <select id="category" aria-label="카테고리">
         <option value="projects">프로젝트</option>
-        <option value="project-a">프로젝트 A</option>
-        <option value="design">설계</option>
-        <option value="notes" selected>잡설</option>
+        <option value="customisa2doom">customISA to DOOM</option>
+        <option value="journal" selected>일지</option>
         <option value="games">게임</option>
         <option value="game-a">게임A</option>
         <option value="game-b">게임B</option>
@@ -481,7 +480,7 @@
           const draft = JSON.parse(saved);
           fields.title.value = draft.title || '';
           fields.description.value = draft.description || '';
-          fields.category.value = draft.category || 'notes';
+          fields.category.value = draft.category || 'journal';
           fields.pubDate.value = draft.pubDate || toLocalDateTime();
           fields.body.value = draft.body || '';
         } catch {
