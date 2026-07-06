@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>글쓰기 - 기록 공간</title>
+  <link rel="stylesheet" href="https://uicdn.toast.com/editor/3.2.2/toastui-editor.min.css" />
+  <script src="https://uicdn.toast.com/editor/3.2.2/toastui-editor-all.min.js"></script>
+  <script src="https://uicdn.toast.com/editor/3.2.2/i18n/ko-kr.js"></script>
   <style>
     :root {
       color-scheme: light;
@@ -186,8 +189,7 @@
     }
 
     .title-input,
-    .summary-input,
-    .body-input {
+    .summary-input {
       width: 100%;
       border: 0;
       background: transparent;
@@ -218,8 +220,7 @@
       line-height: 1.7;
     }
 
-    .summary-input::placeholder,
-    .body-input::placeholder {
+    .summary-input::placeholder {
       color: #a7adb5;
     }
 
@@ -227,46 +228,9 @@
       margin-top: 42px;
     }
 
-    .body-tools {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      padding: 8px 0 12px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .tool {
-      display: grid;
-      width: 34px;
-      height: 34px;
-      place-items: center;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      color: #4d535b;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 800;
-    }
-
-    .tool:hover,
-    .tool:focus-visible {
-      background: var(--surface);
-      color: var(--ink);
-      outline: none;
-    }
-
-    .divider {
-      width: 1px;
-      height: 20px;
-      margin: 0 6px;
-      background: var(--line);
-    }
-
-    .body-input {
+    .body-editor {
       min-height: max(62vh, 620px);
-      padding: 28px 0 0;
+      padding-top: 0;
       font-family:
         "Pretendard",
         "Apple SD Gothic Neo",
@@ -277,7 +241,61 @@
       line-height: 1.8;
     }
 
-    .body-input:focus {
+    .body-editor .toastui-editor-defaultUI {
+      border: 0;
+      font-family: inherit;
+    }
+
+    .body-editor .toastui-editor-defaultUI-toolbar {
+      padding: 8px 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+    }
+
+    .body-editor .toastui-editor-main {
+      border: 0;
+    }
+
+    .body-editor .toastui-editor-md-container,
+    .body-editor .toastui-editor-ww-container {
+      background: transparent;
+    }
+
+    .body-editor .toastui-editor-contents,
+    .body-editor .toastui-editor-md-container .toastui-editor {
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .body-editor .ProseMirror {
+      caret-color: var(--accent);
+    }
+
+    .body-fallback {
+      width: 100%;
+      min-height: max(62vh, 620px);
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      outline: none;
+      overflow: hidden;
+      resize: none;
+      font-family:
+        "Pretendard",
+        "Apple SD Gothic Neo",
+        "Malgun Gothic",
+        system-ui,
+        sans-serif;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .body-fallback::placeholder {
+      color: #a7adb5;
+    }
+
+    .body-fallback:focus {
       caret-color: var(--accent);
     }
 
@@ -330,7 +348,13 @@
         font-size: 32px;
       }
 
-      .body-input {
+      .body-editor {
+        min-height: 68vh;
+        font-size: 15px;
+        line-height: 1.8;
+      }
+
+      .body-fallback {
         min-height: 68vh;
         font-size: 15px;
         line-height: 1.8;
@@ -375,16 +399,15 @@
         <textarea id="description" class="summary-input" rows="2" placeholder="짧은 요약을 적어주세요." aria-label="요약"></textarea>
 
         <section class="body-shell" aria-label="본문">
-          <div class="body-tools">
-            <button class="tool" type="button" data-insert="## " title="소제목" aria-label="소제목">H</button>
-            <button class="tool" type="button" data-wrap="**" title="굵게" aria-label="굵게">B</button>
-            <button class="tool" type="button" data-wrap="*" title="기울임" aria-label="기울임">I</button>
-            <span class="divider" aria-hidden="true"></span>
-            <button class="tool" type="button" data-insert="> " title="인용" aria-label="인용">"</button>
-            <button class="tool" type="button" data-template="[링크](https://)" title="링크" aria-label="링크">↗</button>
-            <button class="tool" type="button" data-template="![이미지 설명](/uploads/)" title="이미지" aria-label="이미지">□</button>
-          </div>
-          <textarea id="body" class="body-input" placeholder="본문을 쓰세요." aria-label="본문"></textarea>
+          <div id="bodyEditor" class="body-editor"></div>
+          <textarea
+            id="body"
+            class="body-fallback"
+            hidden
+            aria-hidden="true"
+            placeholder="본문을 쓰세요."
+            aria-label="본문"
+          ></textarea>
         </section>
       </div>
     </article>
@@ -399,8 +422,10 @@
         category: document.querySelector('#category'),
         pubDate: document.querySelector('#pubDate'),
         body: document.querySelector('#body'),
+        bodyEditor: document.querySelector('#bodyEditor'),
         status: document.querySelector('#status'),
       };
+      let editor;
 
       const toLocalDateTime = (date = new Date()) => {
         const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -409,60 +434,17 @@
 
       const resizeTextarea = (textarea) => {
         if (!textarea) return;
-        // 높이를 auto로 접는 순간 문서가 짧아져 스크롤이 문서 끝으로
-        // 클램프되는 것을 막기 위해 스크롤 위치를 보존한다.
-        const { scrollX, scrollY } = window;
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
-        window.scrollTo(scrollX, scrollY);
-      };
-
-      const caretMirror = document.createElement('div');
-      Object.assign(caretMirror.style, {
-        position: 'absolute',
-        top: '0',
-        left: '-9999px',
-        visibility: 'hidden',
-        whiteSpace: 'pre-wrap',
-        overflowWrap: 'break-word',
-      });
-      caretMirror.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(caretMirror);
-
-      const getCaretTop = (textarea) => {
-        const style = window.getComputedStyle(textarea);
-        [
-          'fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight',
-          'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'boxSizing',
-        ].forEach((prop) => {
-          caretMirror.style[prop] = style[prop];
-        });
-        caretMirror.style.width = `${textarea.clientWidth}px`;
-        caretMirror.textContent = textarea.value.slice(0, textarea.selectionEnd);
-
-        const marker = document.createElement('span');
-        marker.textContent = '\u200b';
-        caretMirror.appendChild(marker);
-
-        return textarea.getBoundingClientRect().top + marker.offsetTop;
-      };
-
-      const keepCaretComfortable = (textarea) => {
-        const caretTop = getCaretTop(textarea);
-        const lineHeight = parseFloat(window.getComputedStyle(textarea).lineHeight) || 27;
-        const bottomGap = Math.min(200, window.innerHeight * 0.28);
-        const topGap = 96;
-
-        const overflow = caretTop + lineHeight - (window.innerHeight - bottomGap);
-        if (overflow > 0) {
-          window.scrollBy(0, overflow);
-        } else if (caretTop < topGap) {
-          window.scrollBy(0, caretTop - topGap);
-        }
       };
 
       const setStatus = (message) => {
         fields.status.textContent = message;
+      };
+
+      const syncBodyField = () => {
+        fields.body.value = editor ? editor.getMarkdown() : fields.body.value;
+        return fields.body.value;
       };
 
       const getPayload = () => ({
@@ -470,7 +452,7 @@
         description: fields.description.value.trim(),
         category: fields.category.value,
         pubDate: fields.pubDate.value || toLocalDateTime(),
-        body: fields.body.value.trimEnd(),
+        body: syncBodyField().trimEnd(),
       });
 
       const getCmsUrl = (payload) => {
@@ -507,37 +489,6 @@
         }
       };
 
-      const insertMarkdown = (textarea, options) => {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = textarea.value.slice(start, end);
-        let next = '';
-        let caret = start;
-
-        if (options.insert) {
-          next = options.insert + selected;
-          caret = start + next.length;
-        }
-
-        if (options.wrap) {
-          next = `${options.wrap}${selected || '텍스트'}${options.wrap}`;
-          caret = selected ? start + next.length : start + options.wrap.length + 3;
-        }
-
-        if (options.template) {
-          next = selected ? options.template.replace('링크', selected).replace('이미지 설명', selected) : options.template;
-          caret = start + next.length;
-        }
-
-        textarea.setRangeText(next, start, end, 'end');
-        textarea.focus();
-        textarea.selectionStart = caret;
-        textarea.selectionEnd = caret;
-        resizeTextarea(textarea);
-        keepCaretComfortable(textarea);
-        saveDraft(true);
-      };
-
       let draftTimer = 0;
       const scheduleDraft = () => {
         clearTimeout(draftTimer);
@@ -547,16 +498,56 @@
         }, 500);
       };
 
+      const showBodyFallback = () => {
+        fields.bodyEditor.hidden = true;
+        fields.body.hidden = false;
+        fields.body.removeAttribute('aria-hidden');
+        resizeTextarea(fields.body);
+        fields.body.addEventListener('input', () => {
+          resizeTextarea(fields.body);
+          scheduleDraft();
+        });
+      };
+
+      const initializeBodyEditor = () => {
+        if (!window.toastui?.Editor) {
+          showBodyFallback();
+          return;
+        }
+
+        try {
+          editor = new toastui.Editor({
+            el: fields.bodyEditor,
+            height: 'auto',
+            minHeight: '620px',
+            initialEditType: 'wysiwyg',
+            previewStyle: 'vertical',
+            initialValue: fields.body.value || '',
+            placeholder: '본문을 쓰세요.',
+            language: 'ko-KR',
+            autofocus: false,
+            usageStatistics: false,
+          });
+
+          editor.on('change', () => {
+            syncBodyField();
+            scheduleDraft();
+          });
+        } catch (error) {
+          console.error(error);
+          showBodyFallback();
+        }
+      };
+
       loadDraft();
       if (!fields.pubDate.value) fields.pubDate.value = toLocalDateTime();
       resizeTextarea(fields.title);
       resizeTextarea(fields.description);
-      resizeTextarea(fields.body);
+      initializeBodyEditor();
 
-      [fields.title, fields.description, fields.body].forEach((field) => {
+      [fields.title, fields.description].forEach((field) => {
         field.addEventListener('input', () => {
           resizeTextarea(field);
-          if (field === fields.body) keepCaretComfortable(field);
           scheduleDraft();
         });
       });
@@ -566,16 +557,6 @@
       });
 
       document.querySelector('#saveDraft').addEventListener('click', () => saveDraft(false));
-
-      document.querySelectorAll('[data-insert], [data-wrap], [data-template]').forEach((button) => {
-        button.addEventListener('click', () => {
-          insertMarkdown(fields.body, {
-            insert: button.dataset.insert,
-            wrap: button.dataset.wrap,
-            template: button.dataset.template,
-          });
-        });
-      });
 
       document.querySelector('#sendToCms').addEventListener('click', () => {
         const payload = getPayload();
