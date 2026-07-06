@@ -33,15 +33,14 @@ export const BANNER = {
 };
 
 export const CATEGORY_TREE: CategoryTreeItem[] = [
+	{ type: 'category',	id: 'projects',	label: '프로젝트',	icon: 'folder' },
 	{
 		type: 'category',
-		id: 'projects',
-		label: '프로젝트',
+		id: 'customisa2doom',
+		label: 'customISA to DOOM',
 		icon: 'folder',
 		children: [
-			{ type: 'category', id: 'project-a', label: '프로젝트 A', icon: 'document' },
-			{ type: 'category', id: 'design', label: '설계', icon: 'document' },
-			{ type: 'category', id: 'notes', label: '잡설', icon: 'document' },
+			{ type: 'category', id: 'journal', label: '일지', icon: 'document' },
 		],
 	},
 	{ type: 'divider', id: 'divider-main' },
@@ -61,8 +60,8 @@ export const CATEGORY_TREE: CategoryTreeItem[] = [
 ];
 
 export const PRIMARY_NAV: NavItem[] = [
-	{ label: '블로그', href: '/blog/' },
 	{ label: '프로필', href: '/profile/' },
+	{ label: '블로그', href: '/blog/' },
 	{ label: '프로젝트', categoryId: 'projects' },
 	{ label: '게임', categoryId: 'games' },
 ];
