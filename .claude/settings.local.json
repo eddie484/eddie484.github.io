@@ -7,7 +7,9 @@
       "Bash(npm.exe run *)",
       "Bash(\"/mnt/c/Program Files/nodejs/npm.cmd\" run build)",
       "Bash(cmd.exe /c \"npm run build\")",
-      "Bash(grep -iA6 \"error\\\\|InvalidContentEntry\\\\|category\")"
+      "Bash(grep -iA6 \"error\\\\|InvalidContentEntry\\\\|category\")",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

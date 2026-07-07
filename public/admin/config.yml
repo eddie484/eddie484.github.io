@@ -7,6 +7,49 @@ media_folder: public/uploads
 public_folder: /uploads
 
 collections:
+  - name: settings
+    label: 설정
+    editor:
+      preview: false
+    files:
+      - name: categories
+        label: 카테고리 관리
+        file: src/data/categories.json
+        fields:
+          - name: categories
+            label: 카테고리 목록
+            label_singular: 항목
+            widget: list
+            summary: '{{fields.label}}'
+            types:
+              - name: category
+                label: 카테고리
+                fields:
+                  - name: id
+                    label: ID
+                    widget: string
+                    hint: 영문 소문자·숫자·하이픈. URL과 글 연결에 쓰이므로 한번 정하면 바꾸지 않는 것을 권장
+                  - name: label
+                    label: 이름
+                    widget: string
+                  - name: icon
+                    label: 아이콘
+                    widget: select
+                    options: [folder, document]
+                    default: document
+                  - name: parent
+                    label: 상위 카테고리
+                    widget: relation
+                    collection: settings
+                    file: categories
+                    search_fields: ['categories.*.label', 'categories.*.id']
+                    value_field: 'categories.*.id'
+                    display_fields: ['categories.*.label']
+                    required: false
+                    hint: 비워두면 최상위 카테고리
+              - name: divider
+                label: 구분선
+
   - name: blog
     label: Blog
     folder: src/content/blog
@@ -14,18 +57,13 @@ collections:
     fields:
       - { name: title, label: Title, widget: string }
       - { name: description, label: Description, widget: string }
-      - label: Category
-        name: category
-        widget: select
-        options:
-          - { label: 프로젝트, value: projects }
-          - { label: customISA to DOOM, value: customisa2doom }
-          - { label: 일지, value: journal }
-          - { label: 게임, value: games }
-          - { label: 게임A, value: game-a }
-          - { label: 게임B, value: game-b }
-          - { label: 게임C, value: game-c }
-          - { label: 잡생각, value: thoughts }
-          - { label: 식사, value: food }
+      - name: category
+        label: Category
+        widget: relation
+        collection: settings
+        file: categories
+        search_fields: ['categories.*.label', 'categories.*.id']
+        value_field: 'categories.*.id'
+        display_fields: ['categories.*.label']
       - { name: pubDate, label: Publish Date, widget: datetime }
       - { name: body, label: Body, widget: markdown }
