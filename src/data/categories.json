@@ -4,18 +4,21 @@
       "type": "category",
       "id": "projects",
       "label": "프로젝트",
+      "labelEn": "Projects",
       "icon": "folder"
     },
     {
       "type": "category",
       "id": "customisa2doom",
       "label": "customISA to DOOM",
+      "labelEn": "customISA to DOOM",
       "icon": "folder"
     },
     {
       "type": "category",
       "id": "journal",
       "label": "일지",
+      "labelEn": "Journal",
       "icon": "document",
       "parent": "customisa2doom"
     },
@@ -26,12 +29,14 @@
       "type": "category",
       "id": "games",
       "label": "게임",
+      "labelEn": "Games",
       "icon": "folder"
     },
     {
       "type": "category",
       "id": "game-a",
       "label": "게임A",
+      "labelEn": "Game A",
       "icon": "document",
       "parent": "games"
     },
@@ -39,6 +44,7 @@
       "type": "category",
       "id": "game-b",
       "label": "게임B",
+      "labelEn": "Game B",
       "icon": "document",
       "parent": "games"
     },
@@ -46,6 +52,7 @@
       "type": "category",
       "id": "game-c",
       "label": "게임C",
+      "labelEn": "Game C",
       "icon": "document",
       "parent": "games"
     },
@@ -53,18 +60,21 @@
       "type": "category",
       "id": "thoughts",
       "label": "잡생각",
+      "labelEn": "Random Thoughts",
       "icon": "document"
     },
     {
       "type": "category",
       "id": "food",
       "label": "식사",
+      "labelEn": "Meals",
       "icon": "document"
     },
     {
       "type": "category",
       "id": "test",
       "label": "테스트 카테고리",
+      "labelEn": "Test Category",
       "icon": "folder",
       "parent": ""
     }

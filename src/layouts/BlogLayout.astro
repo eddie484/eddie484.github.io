@@ -6,6 +6,7 @@ import PostArticle from '../components/PostArticle.astro';
 import PostFooterList from '../components/PostFooterList.astro';
 import PostListPanel from '../components/PostListPanel.astro';
 import { BLOG_DESCRIPTION, BLOG_TITLE } from '../config/blog';
+import { DEFAULT_LANG, UI, type Lang } from '../i18n/ui';
 import { getCategoryById, getCategoryUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
@@ -16,6 +17,9 @@ interface Props {
 	activeCategoryId?: string;
 	postLinkScope?: 'default' | 'all';
 	content?: any;
+	lang?: Lang;
+	// 내용이 대응되는 반대 언어 페이지 경로. 언어 토글과 hreflang에 쓴다.
+	translationUrl?: string;
 }
 
 const {
@@ -26,33 +30,42 @@ const {
 	activeCategoryId,
 	postLinkScope = 'default',
 	content: Content,
+	lang = DEFAULT_LANG,
+	translationUrl,
 } = Astro.props;
-const pageTitle = currentPost ? `${currentPost.data.title} | ${BLOG_TITLE}` : BLOG_TITLE;
-const pageDescription = currentPost?.data.description ?? BLOG_DESCRIPTION;
+const t = UI[lang];
+const pageTitle = currentPost ? `${currentPost.data.title} | ${BLOG_TITLE[lang]}` : BLOG_TITLE[lang];
+const pageDescription = currentPost?.data.description ?? BLOG_DESCRIPTION[lang];
 const activeCategory = activeCategoryId ? getCategoryById(activeCategoryId) : undefined;
-const scopeHref = activeCategory ? getCategoryUrl(activeCategory) : '/blog/';
+const scopeHref = activeCategory ? getCategoryUrl(activeCategory, lang) : `/${lang}/blog/`;
 ---
 
 <!doctype html>
-<html lang="ko">
+<html lang={lang}>
 	<head>
-		<BaseHead title={pageTitle} description={pageDescription} />
+		<BaseHead
+			title={pageTitle}
+			description={pageDescription}
+			lang={lang}
+			translationUrl={translationUrl}
+		/>
 	</head>
 	<body>
-		<BlogHeader />
+		<BlogHeader lang={lang} altUrl={translationUrl} />
 		<main class="blog-shell">
-			<CategorySidebar posts={allPosts} activeCategoryId={activeCategoryId} />
-			<section class="blog-content" aria-label="글 영역">
+			<CategorySidebar posts={allPosts} activeCategoryId={activeCategoryId} lang={lang} />
+			<section class="blog-content" aria-label={t.postAreaAria}>
 				<PostListPanel
 					posts={scopePosts}
 					scopeTitle={scopeTitle}
 					currentPostId={currentPost?.id}
 					postLinkScope={postLinkScope}
+					lang={lang}
 				/>
 				{
 					currentPost && Content ? (
 						<>
-							<PostArticle post={currentPost}>
+							<PostArticle post={currentPost} lang={lang}>
 								<Content />
 							</PostArticle>
 							<PostFooterList
@@ -61,12 +74,13 @@ const scopeHref = activeCategory ? getCategoryUrl(activeCategory) : '/blog/';
 								scopeTitle={scopeTitle}
 								scopeHref={scopeHref}
 								postLinkScope={postLinkScope}
+								lang={lang}
 							/>
 						</>
 					) : (
 						<div class="empty-post">
 							<h1>{scopeTitle}</h1>
-							<p>아직 이 범위에 표시할 글이 없습니다.</p>
+							<p>{t.emptyScope}</p>
 						</div>
 					)
 				}

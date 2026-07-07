@@ -1,0 +1,54 @@
+name: Translate posts to English
+
+# 한글 글(src/content/blog/ko/**)이 main에 올라오면 Claude API로 번역해
+# 영문본(src/content/blog/en/**) PR을 자동 생성한다. PR을 머지하면 배포 워크플로가 영문 글을 게시한다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/blog/ko/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: translate
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # --all: 번역이 없거나 원본이 바뀐(sourceHash 불일치) 글만 골라 번역한다.
+      - name: Translate changed posts
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/translate.mjs --all
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: translate/english
+          add-paths: src/content/blog/en/**
+          commit-message: '영문 번역 자동 생성'
+          title: '영문 번역 검토 요청'
+          body: |
+            Claude API가 자동 생성한 영문 번역입니다.
+
+            - 번역을 검토하고 필요하면 이 브랜치에서 직접 수정해주세요.
+            - 머지하면 영문 블로그(/en/)에 자동 게시됩니다.
+          labels: translation

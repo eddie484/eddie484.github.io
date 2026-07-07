@@ -1,4 +1,5 @@
 ---
+import { DEFAULT_LANG, UI, type Lang } from '../i18n/ui';
 import { formatPostDate, getAllPostUrl, getPostUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
@@ -6,27 +7,30 @@ interface Props {
 	scopeTitle: string;
 	currentPostId?: string;
 	postLinkScope?: 'default' | 'all';
+	lang?: Lang;
 }
 
-const { posts, scopeTitle, currentPostId, postLinkScope = 'default' } = Astro.props;
+const { posts, scopeTitle, currentPostId, postLinkScope = 'default', lang = DEFAULT_LANG } = Astro.props;
+const t = UI[lang];
 const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
+const pageSizes = [5, 10, 15, 20, 30];
 ---
 
 <details class="post-list-panel" data-post-list-panel>
 	<summary>
 		<span>
 			<strong>{scopeTitle}</strong>
-			<span>{posts.length}개의 글</span>
+			<span>{t.postCount(posts.length)}</span>
 		</span>
 		<span class="summary-state">
-			<span class="summary-state__open">목록닫기</span>
-			<span class="summary-state__closed">목록열기</span>
+			<span class="summary-state__open">{t.listClose}</span>
+			<span class="summary-state__closed">{t.listOpen}</span>
 		</span>
 	</summary>
 	<div class="post-list-panel__body">
 		<div class="post-list-head">
-			<span>글 제목</span>
-			<span>작성일</span>
+			<span>{t.postTitle}</span>
+			<span>{t.pubDate}</span>
 		</div>
 		<div class="post-list-rows" data-list-rows>
 			{
@@ -39,22 +43,24 @@ const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
 						hidden={index >= 5}
 					>
 						<span class="post-list-row__title">{post.data.title}</span>
-						<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+						<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate, lang)}</time>
 					</a>
 				))
 			}
 		</div>
 		<div class="post-list-controls">
 			<label>
-				<select data-page-size aria-label="목록 표시 개수">
-					<option value="5" selected>5줄 보기</option>
-					<option value="10">10줄 보기</option>
-					<option value="15">15줄 보기</option>
-					<option value="20">20줄 보기</option>
-					<option value="30">30줄 보기</option>
+				<select data-page-size aria-label={t.listSizeAria}>
+					{
+						pageSizes.map((size) => (
+							<option value={String(size)} selected={size === 5}>
+								{t.rowsView(size)}
+							</option>
+						))
+					}
 				</select>
 			</label>
-			<nav class="post-pagination" data-pagination aria-label="글 목록 페이지"></nav>
+			<nav class="post-pagination" data-pagination aria-label={t.listPageAria}></nav>
 		</div>
 	</div>
 </details>

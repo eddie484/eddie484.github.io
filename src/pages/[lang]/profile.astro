@@ -1,0 +1,55 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import BlogHeader from '../../components/BlogHeader.astro';
+import { BLOG_DESCRIPTION, BLOG_TITLE } from '../../config/blog';
+import { LANGS, otherLang, UI, type Lang } from '../../i18n/ui';
+
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = UI[lang];
+const translationUrl = `/${otherLang(lang)}/profile/`;
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<BaseHead
+			title={`${t.profile} | ${BLOG_TITLE[lang]}`}
+			description={BLOG_DESCRIPTION[lang]}
+			lang={lang}
+			translationUrl={translationUrl}
+		/>
+	</head>
+	<body>
+		<BlogHeader lang={lang} altUrl={translationUrl} />
+		<main class="profile-shell">
+			<h1>{t.profile}</h1>
+			<p>{t.profilePlaceholder}</p>
+		</main>
+	</body>
+</html>
+
+<style>
+	.profile-shell {
+		width: var(--site-width);
+		min-width: var(--site-width);
+		margin: 22px auto 80px;
+		padding: 40px;
+		border: 1px solid var(--line);
+		background: var(--surface);
+	}
+
+	.profile-shell h1 {
+		margin: 0 0 12px;
+		font-size: 26px;
+	}
+
+	.profile-shell p {
+		margin: 0;
+		color: var(--muted);
+		font-size: 14px;
+	}
+</style>

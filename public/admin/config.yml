@@ -32,6 +32,11 @@ collections:
                   - name: label
                     label: 이름
                     widget: string
+                  - name: labelEn
+                    label: 이름(영문)
+                    widget: string
+                    required: false
+                    hint: 영문 블로그에 표시할 이름. 비워두면 한글 이름을 그대로 사용
                   - name: icon
                     label: 아이콘
                     widget: select
@@ -50,9 +55,10 @@ collections:
               - name: divider
                 label: 구분선
 
+  # 한글 원본만 CMS에서 관리한다. 영문(src/content/blog/en)은 번역 워크플로가 PR로 생성한다.
   - name: blog
     label: Blog
-    folder: src/content/blog
+    folder: src/content/blog/ko
     create: true
     fields:
       - { name: title, label: Title, widget: string }

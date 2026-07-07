@@ -1,0 +1,44 @@
+---
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import BlogLayout from '../../../layouts/BlogLayout.astro';
+import {
+	findTranslation,
+	getPostLang,
+	getPostScopePosts,
+	getPostScopeTitle,
+	getPostSlug,
+	getPostUrl,
+	getPostsByLang,
+	sortPosts,
+} from '../../../lib/blog';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('blog');
+	return posts.map((post) => ({
+		params: { lang: getPostLang(post), slug: getPostSlug(post) },
+		props: post,
+	}));
+}
+
+type Props = CollectionEntry<'blog'>;
+
+const currentPost = Astro.props;
+const lang = getPostLang(currentPost);
+const collection = await getCollection('blog');
+const allPosts = sortPosts(getPostsByLang(collection, lang));
+const scopePosts = getPostScopePosts(allPosts, currentPost);
+const scopeTitle = getPostScopeTitle(currentPost, lang);
+const translation = findTranslation(collection, currentPost);
+const { Content } = await render(currentPost);
+---
+
+<BlogLayout
+	allPosts={allPosts}
+	scopePosts={scopePosts}
+	scopeTitle={scopeTitle}
+	currentPost={currentPost}
+	activeCategoryId={currentPost.data.category}
+	content={Content}
+	lang={lang}
+	translationUrl={translation ? getPostUrl(translation) : undefined}
+/>

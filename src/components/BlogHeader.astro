@@ -1,23 +1,31 @@
 ---
 import { BANNER, BLOG_TITLE, EXTERNAL_NAV, PRIMARY_NAV } from '../config/blog';
+import { DEFAULT_LANG, otherLang, UI, type Lang } from '../i18n/ui';
 import { getCategoryById, getCategoryUrl } from '../lib/blog';
+
+interface Props {
+	lang?: Lang;
+	// 언어 토글이 이동할 반대 언어 URL. 없으면 반대 언어 블로그 홈으로 보낸다.
+	altUrl?: string;
+}
+
+const { lang = DEFAULT_LANG, altUrl } = Astro.props;
+const t = UI[lang];
+const nextLang = otherLang(lang);
+const toggleHref = altUrl ?? `/${nextLang}/blog/`;
 
 const currentPath = Astro.url.pathname;
 
 function resolveHref(item: (typeof PRIMARY_NAV)[number]) {
 	if ('href' in item) {
-		return item.href;
+		return `/${lang}${item.href}`;
 	}
 
 	const category = getCategoryById(item.categoryId);
-	return category ? getCategoryUrl(category) : '/blog/';
+	return category ? getCategoryUrl(category, lang) : `/${lang}/blog/`;
 }
 
 function isActive(href: string) {
-	if (href === '/blog/') {
-		return currentPath === '/blog/' || currentPath.startsWith('/blog/');
-	}
-
 	return currentPath === href || currentPath.startsWith(href);
 }
 
@@ -27,20 +35,41 @@ const bannerStyle = BANNER.image
 ---
 
 <header class="blog-header">
-	<div class="admin-bar" aria-label="관리자 메뉴">
-		<button class="admin-toggle" type="button" data-admin-toggle aria-pressed="false">로그인</button>
+	<div class="admin-bar" aria-label={t.adminMenuAria}>
+		<nav class="lang-toggle" aria-label={t.langToggleAria}>
+			<span class:list={{ active: lang === 'ko' }}>
+				{lang === 'ko' ? 'KO' : <a href={toggleHref}>KO</a>}
+			</span>
+			<span aria-hidden="true">·</span>
+			<span class:list={{ active: lang === 'en' }}>
+				{lang === 'en' ? 'EN' : <a href={toggleHref}>EN</a>}
+			</span>
+		</nav>
+		<button
+			class="admin-toggle"
+			type="button"
+			data-admin-toggle
+			data-label-login={t.login}
+			data-label-logout={t.logout}
+			aria-pressed="false">{t.login}</button
+		>
 	</div>
-	<a class="blog-banner" href="/blog/" style={bannerStyle} aria-label={`${BLOG_TITLE} 메인으로 이동`}>
-		<span>{BLOG_TITLE}</span>
+	<a
+		class="blog-banner"
+		href={`/${lang}/blog/`}
+		style={bannerStyle}
+		aria-label={t.goToMain(BLOG_TITLE[lang])}
+	>
+		<span>{BLOG_TITLE[lang]}</span>
 	</a>
-	<nav class="blog-nav" aria-label="상단 메뉴">
+	<nav class="blog-nav" aria-label={t.topMenuAria}>
 		<div class="blog-nav__group">
 			{
 				PRIMARY_NAV.map((item) => {
 					const href = resolveHref(item);
 					return (
 						<a href={href} class:list={{ active: isActive(href) }}>
-							{item.label}
+							{item.label[lang]}
 						</a>
 					);
 				})
@@ -86,7 +115,7 @@ const bannerStyle = BANNER.image
 			});
 
 			if (toggle) {
-				toggle.textContent = isAdmin ? '로그아웃' : '로그인';
+				toggle.textContent = isAdmin ? toggle.dataset.labelLogout : toggle.dataset.labelLogin;
 				toggle.setAttribute('aria-pressed', String(isAdmin));
 			}
 		}
@@ -117,7 +146,32 @@ const bannerStyle = BANNER.image
 		top: -24px;
 		right: 0;
 		display: flex;
+		align-items: center;
 		justify-content: flex-end;
+		gap: 10px;
+	}
+
+	.lang-toggle {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		color: var(--muted-light);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 20px;
+	}
+
+	.lang-toggle a {
+		color: var(--muted);
+		text-decoration: none;
+	}
+
+	.lang-toggle a:hover {
+		color: var(--accent);
+	}
+
+	.lang-toggle .active {
+		color: var(--accent);
 	}
 
 	.admin-toggle {

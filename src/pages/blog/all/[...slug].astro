@@ -1,26 +1,21 @@
 ---
-import { getCollection, render } from 'astro:content';
-import BlogLayout from '../../../layouts/BlogLayout.astro';
-import { sortPosts } from '../../../lib/blog';
+import { getCollection } from 'astro:content';
+import { UI } from '../../../i18n/ui';
+import RedirectPage from '../../../layouts/RedirectPage.astro';
+import { getAllPostUrl, getPostLang, getPostSlug } from '../../../lib/blog';
 
+// 언어 분리 이전의 /blog/all/[slug]/ URL을 /ko/blog/all/[slug]/로 넘긴다.
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: post,
-	}));
+	return posts
+		.filter((post) => getPostLang(post) === 'ko')
+		.map((post) => ({
+			params: { slug: getPostSlug(post) },
+			props: { to: getAllPostUrl(post), title: post.data.title },
+		}));
 }
 
-const currentPost = Astro.props;
-const allPosts = sortPosts(await getCollection('blog'));
-const { Content } = await render(currentPost);
+const { to, title } = Astro.props;
 ---
 
-<BlogLayout
-	allPosts={allPosts}
-	scopePosts={allPosts}
-	scopeTitle="전체보기"
-	currentPost={currentPost}
-	postLinkScope="all"
-	content={Content}
-/>
+<RedirectPage to={to} title={title} message={UI.ko.goToBlog} />

@@ -1,4 +1,5 @@
 ---
+import { DEFAULT_LANG, UI, type Lang } from '../i18n/ui';
 import { formatPostDate, getAllPostUrl, getPostUrl, type BlogPost } from '../lib/blog';
 
 interface Props {
@@ -7,9 +8,11 @@ interface Props {
 	scopeTitle: string;
 	scopeHref: string;
 	postLinkScope?: 'default' | 'all';
+	lang?: Lang;
 }
 
-const { posts, currentPost, scopeTitle, scopeHref, postLinkScope = 'default' } = Astro.props;
+const { posts, currentPost, scopeTitle, scopeHref, postLinkScope = 'default', lang = DEFAULT_LANG } = Astro.props;
+const t = UI[lang];
 const getHref = postLinkScope === 'all' ? getAllPostUrl : getPostUrl;
 const pageSize = 5;
 const currentIndex = Math.max(
@@ -19,12 +22,12 @@ const currentIndex = Math.max(
 const lastStart = Math.max(0, posts.length - pageSize);
 const initialStart = Math.min(Math.max(0, currentIndex - 2), lastStart);
 const initialEnd = Math.min(posts.length, initialStart + pageSize);
-const listTitle = scopeTitle === '전체보기' ? '전체 글' : `${scopeTitle}의 글`;
+const listTitle = postLinkScope === 'all' ? t.allPostsList : t.postsOf(scopeTitle);
 ---
 
 <section
 	class="post-footer-list"
-	aria-label="현재 범위의 다른 글"
+	aria-label={t.footerListAria}
 	data-footer-list
 	data-initial-start={initialStart}
 	data-initial-end={initialEnd}
@@ -32,7 +35,7 @@ const listTitle = scopeTitle === '전체보기' ? '전체 글' : `${scopeTitle}�
 >
 	<header>
 		<strong>{listTitle}</strong>
-		<a href={scopeHref}>전체글 보기</a>
+		<a href={scopeHref}>{t.viewAll}</a>
 	</header>
 	<div class="footer-list-rows">
 		{
@@ -45,14 +48,14 @@ const listTitle = scopeTitle === '전체보기' ? '전체 글' : `${scopeTitle}�
 					hidden={index < initialStart || index >= initialEnd}
 				>
 					<span>{post.data.title}</span>
-					<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+					<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate, lang)}</time>
 				</a>
 			))
 		}
 	</div>
-	<nav class="footer-list-nav" aria-label="목록 이동">
-		<button type="button" data-footer-prev>‹ 이전</button>
-		<button type="button" data-footer-next>다음 ›</button>
+	<nav class="footer-list-nav" aria-label={t.listNavAria}>
+		<button type="button" data-footer-prev>{t.prev}</button>
+		<button type="button" data-footer-next>{t.next}</button>
 	</nav>
 </section>
 

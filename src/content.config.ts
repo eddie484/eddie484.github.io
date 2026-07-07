@@ -21,6 +21,9 @@ const blog = defineCollection({
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
+			// 번역본(en/)에만 존재: 원본(ko) 파일의 해시와 번역 시각. 재번역 필요 감지에 쓴다.
+			sourceHash: z.string().optional(),
+			translatedAt: z.coerce.date().optional(),
 		}),
 });
 

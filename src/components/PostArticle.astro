@@ -1,43 +1,53 @@
 ---
-import { BLOG_AUTHOR } from '../config/blog';
-import { formatPostDate, getPostCategory, type BlogPost } from '../lib/blog';
+import { BLOG_AUTHOR, getCategoryLabel } from '../config/blog';
+import { DEFAULT_LANG, UI, type Lang } from '../i18n/ui';
+import { formatPostDate, getPostCategory, getPostLang, getPostSlug, type BlogPost } from '../lib/blog';
 
 interface Props {
 	post: BlogPost;
+	lang?: Lang;
 }
 
-const { post } = Astro.props;
+const { post, lang = DEFAULT_LANG } = Astro.props;
+const t = UI[lang];
 const category = getPostCategory(post);
-const encodedPostId = post.id.split('/').map(encodeURIComponent).join('/');
-const cmsEditUrl = new URL(
-	`/admin/#/collections/blog/entries/${encodedPostId}`,
-	Astro.site ?? Astro.url.origin,
-).toString();
+// CMS는 ko 폴더만 관리하므로 ko 글은 Sveltia로, en 글은 GitHub 파일 편집으로 연결한다.
+const encodedSlug = getPostSlug(post).split('/').map(encodeURIComponent).join('/');
+const editUrl =
+	getPostLang(post) === 'en' && post.filePath
+		? `https://github.com/eddie484/eddie484.github.io/edit/main/${post.filePath}`
+		: new URL(`/admin/#/collections/blog/entries/${encodedSlug}`, Astro.site ?? Astro.url.origin).toString();
 ---
 
 <article class="post-article">
 	<header class="post-article__header">
-		<div class="post-category">{category?.label ?? '카테고리'}</div>
+		<div class="post-category">{category ? getCategoryLabel(category, lang) : t.categoryFallback}</div>
 		<h1>{post.data.title}</h1>
 		<div class="post-meta-row">
 			<div class="post-meta">
 				<span class="post-author">{BLOG_AUTHOR}</span>
-				<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate)}</time>
+				<time datetime={post.data.pubDate.toISOString()}>{formatPostDate(post.data.pubDate, lang)}</time>
 			</div>
-			<div class="post-actions" aria-label="글 작업">
-				<button class="post-action-button" type="button" data-copy-url>URL 복사</button>
+			<div class="post-actions" aria-label={t.postActionsAria}>
+				<button
+					class="post-action-button"
+					type="button"
+					data-copy-url
+					data-label-copied={t.copied}
+					data-label-failed={t.copyFailed}>{t.copyUrl}</button
+				>
 				<div class="post-admin-menu" data-admin-only data-post-menu hidden>
 					<button
 						class="post-menu-toggle"
 						type="button"
-						aria-label="글 관리 메뉴 열기"
+						aria-label={t.postMenuAria}
 						aria-expanded="false"
 						data-post-menu-toggle
 					>
 						⋮
 					</button>
 					<div class="post-menu-panel" data-post-menu-panel hidden>
-						<a class="post-menu-item" href={cmsEditUrl}>수정하기</a>
+						<a class="post-menu-item" href={editUrl}>{t.edit}</a>
 					</div>
 				</div>
 			</div>
@@ -77,12 +87,12 @@ const cmsEditUrl = new URL(
 		}
 
 		document.querySelectorAll('[data-copy-url]').forEach((button) => {
-			const defaultLabel = button.textContent || 'URL 복사';
+			const defaultLabel = button.textContent;
 			let resetTimer;
 
 			button.addEventListener('click', async () => {
 				window.clearTimeout(resetTimer);
-				button.textContent = '복사됨';
+				button.textContent = button.dataset.labelCopied;
 				resetTimer = window.setTimeout(() => {
 					button.textContent = defaultLabel;
 				}, 1400);
@@ -91,7 +101,7 @@ const cmsEditUrl = new URL(
 					await copyWithFallback(window.location.href);
 				} catch {
 					window.clearTimeout(resetTimer);
-					button.textContent = '복사 실패';
+					button.textContent = button.dataset.labelFailed;
 					resetTimer = window.setTimeout(() => {
 						button.textContent = defaultLabel;
 					}, 1400);

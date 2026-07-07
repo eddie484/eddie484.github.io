@@ -1,0 +1,26 @@
+---
+import { getCollection, render } from 'astro:content';
+import { LANGS, otherLang, UI, type Lang } from '../../../i18n/ui';
+import BlogLayout from '../../../layouts/BlogLayout.astro';
+import { getLatestPost, getPostsByLang, sortPosts } from '../../../lib/blog';
+
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const allPosts = sortPosts(getPostsByLang(await getCollection('blog'), lang));
+const currentPost = getLatestPost(allPosts);
+const { Content } = currentPost ? await render(currentPost) : { Content: undefined };
+---
+
+<BlogLayout
+	allPosts={allPosts}
+	scopePosts={allPosts}
+	scopeTitle={UI[lang].allPosts}
+	currentPost={currentPost}
+	postLinkScope="all"
+	content={Content}
+	lang={lang}
+	translationUrl={`/${otherLang(lang)}/blog/`}
+/>

@@ -1,0 +1,40 @@
+---
+import { getCollection, render } from 'astro:content';
+import { getCategoryLabel } from '../../../../config/blog';
+import { LANGS, otherLang, type Lang } from '../../../../i18n/ui';
+import BlogLayout from '../../../../layouts/BlogLayout.astro';
+import {
+	FLAT_CATEGORIES,
+	getCategoryUrl,
+	getPostsByLang,
+	getPostsForCategory,
+	sortPosts,
+} from '../../../../lib/blog';
+
+export function getStaticPaths() {
+	return LANGS.flatMap((lang) =>
+		FLAT_CATEGORIES.map((category) => ({
+			params: { lang, category: category.path.join('/') },
+			props: category,
+		})),
+	);
+}
+
+const lang = Astro.params.lang as Lang;
+const category = Astro.props;
+const allPosts = sortPosts(getPostsByLang(await getCollection('blog'), lang));
+const scopePosts = getPostsForCategory(allPosts, category.id);
+const currentPost = scopePosts[0];
+const { Content } = currentPost ? await render(currentPost) : { Content: undefined };
+---
+
+<BlogLayout
+	allPosts={allPosts}
+	scopePosts={scopePosts}
+	scopeTitle={getCategoryLabel(category, lang)}
+	currentPost={currentPost}
+	activeCategoryId={category.id}
+	content={Content}
+	lang={lang}
+	translationUrl={getCategoryUrl(category, otherLang(lang))}
+/>

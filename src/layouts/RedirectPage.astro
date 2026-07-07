@@ -1,0 +1,26 @@
+---
+import { DEFAULT_LANG, type Lang } from '../i18n/ui';
+
+interface Props {
+	to: string;
+	title: string;
+	message?: string;
+	lang?: Lang;
+}
+
+const { to, title, message, lang = DEFAULT_LANG } = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta http-equiv="refresh" content={`0; url=${to}`} />
+		<link rel="canonical" href={to} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<p><a href={to}>{message ?? to}</a></p>
+	</body>
+</html>

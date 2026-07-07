@@ -1,5 +1,11 @@
 import type { CollectionEntry } from 'astro:content';
-import { CATEGORY_TREE, type CategoryItem, type CategoryTreeItem } from '../config/blog';
+import {
+	CATEGORY_TREE,
+	getCategoryLabel,
+	type CategoryItem,
+	type CategoryTreeItem,
+} from '../config/blog';
+import { DEFAULT_LANG, otherLang, UI, type Lang } from '../i18n/ui';
 
 export type BlogPost = CollectionEntry<'blog'>;
 
@@ -40,21 +46,44 @@ export function getCategoryByPath(path: string[]) {
 	return FLAT_CATEGORIES.find((category) => category.path.join('/') === path.join('/'));
 }
 
-export function getCategoryUrl(category: Pick<FlatCategory, 'path'>) {
-	return `/blog/category/${category.path.join('/')}/`;
+export function getCategoryUrl(category: Pick<FlatCategory, 'path'>, lang: Lang) {
+	return `/${lang}/blog/category/${category.path.join('/')}/`;
 }
 
-export function getCategoryUrlById(categoryId: string) {
+export function getCategoryUrlById(categoryId: string, lang: Lang) {
 	const category = getCategoryById(categoryId);
-	return category ? getCategoryUrl(category) : '/blog/';
+	return category ? getCategoryUrl(category, lang) : `/${lang}/blog/`;
+}
+
+// 글의 언어는 콘텐츠 폴더(ko/, en/) 접두어로 판별한다.
+export function getPostLang(post: BlogPost): Lang {
+	return post.id.startsWith('en/') ? 'en' : DEFAULT_LANG;
+}
+
+export function getPostSlug(post: BlogPost) {
+	const [prefix, ...rest] = post.id.split('/');
+	return prefix === 'ko' || prefix === 'en' ? rest.join('/') : post.id;
+}
+
+export function getPostsByLang(posts: BlogPost[], lang: Lang) {
+	return posts.filter((post) => getPostLang(post) === lang);
+}
+
+// 같은 slug(파일명)를 가진 반대 언어 글 = 번역 쌍
+export function findTranslation(posts: BlogPost[], post: BlogPost) {
+	const targetLang = otherLang(getPostLang(post));
+	const slug = getPostSlug(post);
+	return posts.find(
+		(candidate) => getPostLang(candidate) === targetLang && getPostSlug(candidate) === slug,
+	);
 }
 
 export function getPostUrl(post: BlogPost) {
-	return `/blog/${post.id}/`;
+	return `/${getPostLang(post)}/blog/${getPostSlug(post)}/`;
 }
 
 export function getAllPostUrl(post: BlogPost) {
-	return `/blog/all/${post.id}/`;
+	return `/${getPostLang(post)}/blog/all/${getPostSlug(post)}/`;
 }
 
 export function sortPosts(posts: BlogPost[]) {
@@ -91,8 +120,9 @@ export function getPostScopePosts(posts: BlogPost[], post: BlogPost) {
 	return getPostsForCategory(posts, post.data.category);
 }
 
-export function getPostScopeTitle(post: BlogPost) {
-	return getPostCategory(post)?.label ?? '카테고리';
+export function getPostScopeTitle(post: BlogPost, lang: Lang) {
+	const category = getPostCategory(post);
+	return category ? getCategoryLabel(category, lang) : UI[lang].categoryFallback;
 }
 
 export function getAdjacentWindow(posts: BlogPost[], currentPost: BlogPost, size = 5) {
@@ -118,12 +148,18 @@ export function getAdjacentWindow(posts: BlogPost[], currentPost: BlogPost, size
 	};
 }
 
-export function formatPostDate(date: Date) {
+const EN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function formatPostDate(date: Date, lang: Lang = DEFAULT_LANG) {
 	const year = date.getFullYear();
 	const month = date.getMonth() + 1;
 	const day = date.getDate();
 	const hours = date.getHours().toString().padStart(2, '0');
 	const minutes = date.getMinutes().toString().padStart(2, '0');
+
+	if (lang === 'en') {
+		return `${EN_MONTHS[date.getMonth()]} ${day}, ${year} ${hours}:${minutes}`;
+	}
 
 	return `${year}. ${month}. ${day}. ${hours}:${minutes}`;
 }

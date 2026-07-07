@@ -168,7 +168,7 @@ permissions:
 ### 6.3 필요한 것
 
 - **Repo secret**: `ANTHROPIC_API_KEY`
-- **모델**: `claude-sonnet-5` 권장 (번역 품질/비용 균형; 글 하나당 몇 센트 수준)
+- **모델**: `claude-opus-4-8` (기본값, 최고 품질). 비용을 줄이려면 `scripts/translate.mjs`의 `MODEL`을 `claude-sonnet-5` 등으로 변경
 - 무한 루프 방지: `paths`가 `ko/**`로 한정되어 있어 en 커밋으로는 재트리거되지 않음
 
 ### 6.4 수정 글 처리

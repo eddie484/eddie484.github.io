@@ -5,17 +5,26 @@ import '../styles/global.css';
 import type { ImageMetadata } from 'astro';
 import FallbackImage from '../assets/blog-placeholder-1.jpg';
 import { SITE_TITLE } from '../consts';
+import { DEFAULT_LANG, otherLang, type Lang } from '../i18n/ui';
 import { Font } from 'astro:assets';
 
 interface Props {
 	title: string;
 	description: string;
 	image?: ImageMetadata;
+	lang?: Lang;
+	// 이 페이지와 내용이 대응되는 반대 언어 페이지의 경로. 있으면 hreflang을 내보낸다.
+	translationUrl?: string;
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image = FallbackImage } = Astro.props;
+const { title, description, image = FallbackImage, lang = DEFAULT_LANG, translationUrl } = Astro.props;
+const altLang = otherLang(lang);
+const ogLocale = lang === 'ko' ? 'ko_KR' : 'en_US';
+const altOgLocale = lang === 'ko' ? 'en_US' : 'ko_KR';
+const translationURL = translationUrl ? new URL(translationUrl, Astro.site) : undefined;
+const defaultLangURL = lang === DEFAULT_LANG ? canonicalURL : translationURL;
 ---
 
 <!-- Global Metadata -->
@@ -27,8 +36,8 @@ const { title, description, image = FallbackImage } = Astro.props;
 <link
 	rel="alternate"
 	type="application/rss+xml"
-	title={SITE_TITLE}
-	href={new URL('rss.xml', Astro.site)}
+	title={SITE_TITLE[lang]}
+	href={new URL(`${lang}/rss.xml`, Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
 
@@ -36,6 +45,17 @@ const { title, description, image = FallbackImage } = Astro.props;
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
+
+<!-- Language alternates -->
+{
+	translationURL && (
+		<>
+			<link rel="alternate" hreflang={lang} href={canonicalURL} />
+			<link rel="alternate" hreflang={altLang} href={translationURL} />
+			{defaultLangURL && <link rel="alternate" hreflang="x-default" href={defaultLangURL} />}
+		</>
+	)
+}
 
 <!-- Primary Meta Tags -->
 <title>{title}</title>
@@ -47,6 +67,8 @@ const { title, description, image = FallbackImage } = Astro.props;
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={new URL(image.src, Astro.url)} />
+<meta property="og:locale" content={ogLocale} />
+{translationURL && <meta property="og:locale:alternate" content={altOgLocale} />}
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />

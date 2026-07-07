@@ -7,11 +7,16 @@ import { BLOG_TITLE } from '../config/blog';
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<meta http-equiv="refresh" content="0; url=/blog/" />
-		<link rel="canonical" href="/blog/" />
-		<title>{BLOG_TITLE}</title>
+		<script is:inline>
+			// 브라우저 언어가 한국어면 /ko/, 아니면 /en/으로 보낸다. (JS 미지원 시 아래 meta refresh가 /ko/로)
+			var target = (navigator.language || '').toLowerCase().indexOf('ko') === 0 ? '/ko/blog/' : '/en/blog/';
+			location.replace(target);
+		</script>
+		<meta http-equiv="refresh" content="0; url=/ko/blog/" />
+		<link rel="canonical" href="/ko/blog/" />
+		<title>{BLOG_TITLE.ko}</title>
 	</head>
 	<body>
-		<p><a href="/blog/">블로그로 이동합니다.</a></p>
+		<p><a href="/ko/blog/">블로그로 이동합니다.</a></p>
 	</body>
 </html>

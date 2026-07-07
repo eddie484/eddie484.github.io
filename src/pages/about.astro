@@ -1,17 +1,7 @@
 ---
 import { BLOG_TITLE } from '../config/blog';
+import { UI } from '../i18n/ui';
+import RedirectPage from '../layouts/RedirectPage.astro';
 ---
 
-<!doctype html>
-<html lang="ko">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<meta http-equiv="refresh" content="0; url=/profile/" />
-		<link rel="canonical" href="/profile/" />
-		<title>프로필 | {BLOG_TITLE}</title>
-	</head>
-	<body>
-		<p><a href="/profile/">프로필로 이동합니다.</a></p>
-	</body>
-</html>
+<RedirectPage to="/ko/profile/" title={`${UI.ko.profile} | ${BLOG_TITLE.ko}`} message={UI.ko.goToProfile} />

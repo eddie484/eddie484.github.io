@@ -1,18 +1,7 @@
 ---
-import { getCollection, render } from 'astro:content';
-import BlogLayout from '../../layouts/BlogLayout.astro';
-import { getLatestPost, sortPosts } from '../../lib/blog';
-
-const allPosts = sortPosts(await getCollection('blog'));
-const currentPost = getLatestPost(allPosts);
-const { Content } = currentPost ? await render(currentPost) : { Content: undefined };
+import { BLOG_TITLE } from '../../config/blog';
+import { UI } from '../../i18n/ui';
+import RedirectPage from '../../layouts/RedirectPage.astro';
 ---
 
-<BlogLayout
-	allPosts={allPosts}
-	scopePosts={allPosts}
-	scopeTitle="전체보기"
-	currentPost={currentPost}
-	postLinkScope="all"
-	content={Content}
-/>
+<RedirectPage to="/ko/blog/" title={BLOG_TITLE.ko} message={UI.ko.goToBlog} />

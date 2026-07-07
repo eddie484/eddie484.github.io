@@ -1,9 +1,11 @@
 import categoriesData from '../data/categories.json';
+import type { Lang, LocalizedText } from '../i18n/ui';
 
 export type CategoryItem = {
 	type: 'category';
 	id: string;
 	label: string;
+	labelEn?: string;
 	icon?: string;
 	children?: CategoryTreeItem[];
 };
@@ -17,16 +19,24 @@ export type CategoryTreeItem = CategoryItem | CategoryDivider;
 
 export type NavItem =
 	| {
-			label: string;
+			label: LocalizedText;
 			href: string;
 	  }
 	| {
-			label: string;
+			label: LocalizedText;
 			categoryId: string;
 	  };
 
-export const BLOG_TITLE = '기록 공간';
-export const BLOG_DESCRIPTION = '프로젝트 기록과 일지를 정리하는 개인 공간입니다.';
+export const BLOG_TITLE: LocalizedText = {
+	ko: '기록 공간',
+	en: "Eddie's Log",
+};
+
+export const BLOG_DESCRIPTION: LocalizedText = {
+	ko: '프로젝트 기록과 일지를 정리하는 개인 공간입니다.',
+	en: 'A personal space for project records and journals.',
+};
+
 export const BLOG_AUTHOR = 'Eddie';
 
 export const BANNER = {
@@ -34,10 +44,15 @@ export const BANNER = {
 	image: '',
 };
 
+export function getCategoryLabel(category: Pick<CategoryItem, 'label' | 'labelEn'>, lang: Lang) {
+	return lang === 'en' ? (category.labelEn ?? category.label) : category.label;
+}
+
 type RawCategoryEntry = {
 	type: string;
 	id?: string;
 	label?: string;
+	labelEn?: string;
 	icon?: string;
 	parent?: string;
 };
@@ -72,6 +87,7 @@ function buildCategoryTree(entries: RawCategoryEntry[]): CategoryTreeItem[] {
 			type: 'category',
 			id: entry.id,
 			label: entry.label,
+			...(entry.labelEn ? { labelEn: entry.labelEn } : {}),
 			...(entry.icon ? { icon: entry.icon } : {}),
 		};
 
@@ -103,16 +119,16 @@ export const CATEGORY_IDS: ReadonlySet<string> = new Set(
 );
 
 export const PRIMARY_NAV: NavItem[] = [
-	{ label: '프로필', href: '/profile/' },
-	{ label: '블로그', href: '/blog/' },
-	{ label: '프로젝트', categoryId: 'projects' },
-	{ label: '게임', categoryId: 'games' },
+	{ label: { ko: '프로필', en: 'Profile' }, href: '/profile/' },
+	{ label: { ko: '블로그', en: 'Blog' }, href: '/blog/' },
+	{ label: { ko: '프로젝트', en: 'Projects' }, categoryId: 'projects' },
+	{ label: { ko: '게임', en: 'Games' }, categoryId: 'games' },
 ];
 
 for (const item of PRIMARY_NAV) {
 	if ('categoryId' in item && !CATEGORY_IDS.has(item.categoryId)) {
 		throw new Error(
-			`PRIMARY_NAV의 "${item.label}"이 존재하지 않는 카테고리 "${item.categoryId}"를 참조합니다. ` +
+			`PRIMARY_NAV의 "${item.label.ko}"이 존재하지 않는 카테고리 "${item.categoryId}"를 참조합니다. ` +
 				'src/data/categories.json을 확인하세요.',
 		);
 	}

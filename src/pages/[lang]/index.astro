@@ -1,0 +1,13 @@
+---
+import { BLOG_TITLE } from '../../config/blog';
+import { LANGS, UI, type Lang } from '../../i18n/ui';
+import RedirectPage from '../../layouts/RedirectPage.astro';
+
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+---
+
+<RedirectPage to={`/${lang}/blog/`} title={BLOG_TITLE[lang]} message={UI[lang].goToBlog} lang={lang} />

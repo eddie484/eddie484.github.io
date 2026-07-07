@@ -1,13 +1,16 @@
 ---
-import { CATEGORY_TREE, type CategoryItem, type CategoryTreeItem } from '../config/blog';
+import { CATEGORY_TREE, getCategoryLabel, type CategoryItem, type CategoryTreeItem } from '../config/blog';
+import { DEFAULT_LANG, UI, type Lang } from '../i18n/ui';
 import { getCategoryById, getCategoryUrl, isCategoryItem, type BlogPost } from '../lib/blog';
 
 interface Props {
 	posts: BlogPost[];
 	activeCategoryId?: string;
+	lang?: Lang;
 }
 
-const { posts, activeCategoryId } = Astro.props;
+const { posts, activeCategoryId, lang = DEFAULT_LANG } = Astro.props;
+const t = UI[lang];
 
 type DisplayCategory =
 	| {
@@ -52,13 +55,16 @@ const cmsNewUrl = 'https://eddie484.github.io/admin/write.html';
 const cmsManageUrl = 'https://eddie484.github.io/admin/#/collections/blog';
 ---
 
-<aside class="category-sidebar" aria-label="카테고리">
+<aside class="category-sidebar" aria-label={t.categories}>
 	<div class="category-panel">
-		<div class="category-sidebar__title">카테고리</div>
+		<div class="category-sidebar__title">{t.categories}</div>
 		<nav>
-			<a class:list={['category-link', 'category-link--all', { active: !activeCategoryId }]} href="/blog/">
+			<a
+				class:list={['category-link', 'category-link--all', { active: !activeCategoryId }]}
+				href={`/${lang}/blog/`}
+			>
 				<span class="category-icon">▢</span>
-				<span>전체보기</span>
+				<span>{t.allPosts}</span>
 				<span class="post-count">({posts.length})</span>
 			</a>
 			<ul class="category-tree">
@@ -70,11 +76,11 @@ const cmsManageUrl = 'https://eddie484.github.io/admin/#/collections/blog';
 							<li>
 								<a
 									class:list={['category-link', { active: isActive(item.category) }]}
-									href={getCategoryById(item.category.id) ? getCategoryUrl(getCategoryById(item.category.id)!) : '/blog/'}
+									href={getCategoryById(item.category.id) ? getCategoryUrl(getCategoryById(item.category.id)!, lang) : `/${lang}/blog/`}
 									style={`--depth: ${item.depth}`}
 								>
 									<span class="category-icon">{renderIcon(item.category)}</span>
-									<span>{item.category.label}</span>
+									<span>{getCategoryLabel(item.category, lang)}</span>
 								</a>
 							</li>
 						),
@@ -84,9 +90,9 @@ const cmsManageUrl = 'https://eddie484.github.io/admin/#/collections/blog';
 		</nav>
 	</div>
 	<div class="sidebar-admin-actions" data-admin-only hidden>
-		<a href={cmsNewUrl}>✎ 글쓰기</a>
+		<a href={cmsNewUrl}>✎ {t.write}</a>
 		<span aria-hidden="true">|</span>
-		<a href={cmsManageUrl}>관리</a>
+		<a href={cmsManageUrl}>{t.manage}</a>
 	</div>
 </aside>
 

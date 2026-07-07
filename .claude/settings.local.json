@@ -9,7 +9,8 @@
       "Bash(cmd.exe /c \"npm run build\")",
       "Bash(grep -iA6 \"error\\\\|InvalidContentEntry\\\\|category\")",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(git diff *)"
     ]
   }
 }
