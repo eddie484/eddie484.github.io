@@ -1,14 +1,72 @@
 {
-	"categories": [
-		{ "type": "category", "id": "projects", "label": "프로젝트", "icon": "folder" },
-		{ "type": "category", "id": "customisa2doom", "label": "customISA to DOOM", "icon": "folder" },
-		{ "type": "category", "id": "journal", "label": "일지", "icon": "document", "parent": "customisa2doom" },
-		{ "type": "divider" },
-		{ "type": "category", "id": "games", "label": "게임", "icon": "folder" },
-		{ "type": "category", "id": "game-a", "label": "게임A", "icon": "document", "parent": "games" },
-		{ "type": "category", "id": "game-b", "label": "게임B", "icon": "document", "parent": "games" },
-		{ "type": "category", "id": "game-c", "label": "게임C", "icon": "document", "parent": "games" },
-		{ "type": "category", "id": "thoughts", "label": "잡생각", "icon": "document" },
-		{ "type": "category", "id": "food", "label": "식사", "icon": "document" }
-	]
+  "categories": [
+    {
+      "type": "category",
+      "id": "projects",
+      "label": "프로젝트",
+      "icon": "folder"
+    },
+    {
+      "type": "category",
+      "id": "customisa2doom",
+      "label": "customISA to DOOM",
+      "icon": "folder"
+    },
+    {
+      "type": "category",
+      "id": "journal",
+      "label": "일지",
+      "icon": "document",
+      "parent": "customisa2doom"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "category",
+      "id": "games",
+      "label": "게임",
+      "icon": "folder"
+    },
+    {
+      "type": "category",
+      "id": "game-a",
+      "label": "게임A",
+      "icon": "document",
+      "parent": "games"
+    },
+    {
+      "type": "category",
+      "id": "game-b",
+      "label": "게임B",
+      "icon": "document",
+      "parent": "games"
+    },
+    {
+      "type": "category",
+      "id": "game-c",
+      "label": "게임C",
+      "icon": "document",
+      "parent": "games"
+    },
+    {
+      "type": "category",
+      "id": "thoughts",
+      "label": "잡생각",
+      "icon": "document"
+    },
+    {
+      "type": "category",
+      "id": "food",
+      "label": "식사",
+      "icon": "document"
+    },
+    {
+      "type": "category",
+      "id": "test",
+      "label": "테스트 카테고리",
+      "icon": "folder",
+      "parent": ""
+    }
+  ]
 }
