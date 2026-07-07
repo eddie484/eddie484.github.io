@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>글쓰기 - 기록 공간</title>
-  <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
   <style>
     :root {
       color-scheme: light;
@@ -187,7 +186,8 @@
     }
 
     .title-input,
-    .summary-input {
+    .summary-input,
+    .body-input {
       width: 100%;
       border: 0;
       background: transparent;
@@ -218,7 +218,8 @@
       line-height: 1.7;
     }
 
-    .summary-input::placeholder {
+    .summary-input::placeholder,
+    .body-input::placeholder {
       color: #a7adb5;
     }
 
@@ -226,47 +227,46 @@
       margin-top: 42px;
     }
 
-    /* Toast UI 에디터를 기존 '종이' 디자인에 녹인다. */
-    .body-shell .toastui-editor-defaultUI {
-      border: 0;
-      border-radius: 0;
-      font-family: inherit;
-    }
-
-    .body-shell .toastui-editor-defaultUI-toolbar {
-      padding: 4px 0 8px;
+    .body-tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 0 12px;
       border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
     }
 
-    .body-shell .toastui-editor-toolbar-divider {
-      margin: 0 6px;
-      background-color: var(--line);
-    }
-
-    .body-shell .toastui-editor-toolbar-icons {
+    .tool {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
       border: 0;
       border-radius: 0;
-      background-color: transparent;
-    }
-
-    .body-shell .toastui-editor-toolbar-icons:not(:disabled):hover,
-    .body-shell .toastui-editor-toolbar-icons.active {
-      background-color: var(--surface);
-    }
-
-    .body-shell .toastui-editor-main,
-    .body-shell .toastui-editor-md-container,
-    .body-shell .toastui-editor-ww-container {
       background: transparent;
+      color: #4d535b;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 800;
     }
 
-    .body-shell .toastui-editor-defaultUI .ProseMirror {
+    .tool:hover,
+    .tool:focus-visible {
+      background: var(--surface);
+      color: var(--ink);
+      outline: none;
+    }
+
+    .divider {
+      width: 1px;
+      height: 20px;
+      margin: 0 6px;
+      background: var(--line);
+    }
+
+    .body-input {
+      min-height: max(62vh, 620px);
       padding: 28px 0 0;
-    }
-
-    .body-shell .toastui-editor-contents {
       font-family:
         "Pretendard",
         "Apple SD Gothic Neo",
@@ -275,29 +275,10 @@
         sans-serif;
       font-size: 15px;
       line-height: 1.8;
-      color: var(--ink);
     }
 
-    .body-shell .toastui-editor-contents .placeholder {
-      color: #a7adb5;
-    }
-
-    .body-shell .toastui-editor-mode-switch {
-      border-top: 1px solid var(--line);
-      background: transparent;
-    }
-
-    .body-shell .toastui-editor-mode-switch .tab-item {
-      border: 1px solid transparent;
-      border-radius: 0;
-      background: transparent;
-      color: var(--muted);
-    }
-
-    .body-shell .toastui-editor-mode-switch .tab-item.active {
-      border-color: var(--line);
-      background: #fff;
-      color: var(--ink);
+    .body-input:focus {
+      caret-color: var(--accent);
     }
 
     @media (max-width: 780px) {
@@ -348,6 +329,12 @@
       .title-input {
         font-size: 32px;
       }
+
+      .body-input {
+        min-height: 68vh;
+        font-size: 15px;
+        line-height: 1.8;
+      }
     }
   </style>
 </head>
@@ -379,14 +366,21 @@
         <textarea id="description" class="summary-input" rows="2" placeholder="짧은 요약을 적어주세요." aria-label="요약"></textarea>
 
         <section class="body-shell" aria-label="본문">
-          <div id="body-editor"></div>
+          <div class="body-tools">
+            <button class="tool" type="button" data-insert="## " title="소제목" aria-label="소제목">H</button>
+            <button class="tool" type="button" data-wrap="**" title="굵게" aria-label="굵게">B</button>
+            <button class="tool" type="button" data-wrap="*" title="기울임" aria-label="기울임">I</button>
+            <span class="divider" aria-hidden="true"></span>
+            <button class="tool" type="button" data-insert="> " title="인용" aria-label="인용">"</button>
+            <button class="tool" type="button" data-template="[링크](https://)" title="링크" aria-label="링크">↗</button>
+            <button class="tool" type="button" data-template="![이미지 설명](/uploads/)" title="이미지" aria-label="이미지">□</button>
+          </div>
+          <textarea id="body" class="body-input" placeholder="본문을 쓰세요." aria-label="본문"></textarea>
         </section>
       </div>
     </article>
   </main>
 
-  <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
-  <script src="https://uicdn.toast.com/editor/latest/i18n/ko-kr.js"></script>
   <script>
     (() => {
       const DRAFT_KEY = 'blog-writer:draft';
@@ -395,6 +389,7 @@
         description: document.querySelector('#description'),
         category: document.querySelector('#category'),
         pubDate: document.querySelector('#pubDate'),
+        body: document.querySelector('#body'),
         status: document.querySelector('#status'),
       };
 
@@ -413,33 +408,60 @@
         window.scrollTo(scrollX, scrollY);
       };
 
+      const caretMirror = document.createElement('div');
+      Object.assign(caretMirror.style, {
+        position: 'absolute',
+        top: '0',
+        left: '-9999px',
+        visibility: 'hidden',
+        whiteSpace: 'pre-wrap',
+        overflowWrap: 'break-word',
+      });
+      caretMirror.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(caretMirror);
 
+      const getCaretTop = (textarea) => {
+        const style = window.getComputedStyle(textarea);
+        [
+          'fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight',
+          'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'boxSizing',
+        ].forEach((prop) => {
+          caretMirror.style[prop] = style[prop];
+        });
+        caretMirror.style.width = `${textarea.clientWidth}px`;
+        caretMirror.textContent = textarea.value.slice(0, textarea.selectionEnd);
+
+        const marker = document.createElement('span');
+        marker.textContent = '\u200b';
+        caretMirror.appendChild(marker);
+
+        return textarea.getBoundingClientRect().top + marker.offsetTop;
+      };
+
+      const keepCaretComfortable = (textarea) => {
+        const caretTop = getCaretTop(textarea);
+        const lineHeight = parseFloat(window.getComputedStyle(textarea).lineHeight) || 27;
+        const bottomGap = Math.min(200, window.innerHeight * 0.28);
+        const topGap = 96;
+
+        const overflow = caretTop + lineHeight - (window.innerHeight - bottomGap);
+        if (overflow > 0) {
+          window.scrollBy(0, overflow);
+        } else if (caretTop < topGap) {
+          window.scrollBy(0, caretTop - topGap);
+        }
+      };
 
       const setStatus = (message) => {
         fields.status.textContent = message;
       };
-
-      const readDraft = () => {
-        try {
-          return JSON.parse(localStorage.getItem(DRAFT_KEY)) || {};
-        } catch {
-          localStorage.removeItem(DRAFT_KEY);
-          return {};
-        }
-      };
-
-      const draft = readDraft();
-
-      let editor = null;
-      // 에디터 로드에 실패해도 저장해둔 초안 본문은 잃지 않는다.
-      const getBody = () => (editor ? editor.getMarkdown().trimEnd() : (draft.body || ''));
 
       const getPayload = () => ({
         title: fields.title.value.trim(),
         description: fields.description.value.trim(),
         category: fields.category.value,
         pubDate: fields.pubDate.value || toLocalDateTime(),
-        body: getBody(),
+        body: fields.body.value.trimEnd(),
       });
 
       const getCmsUrl = (payload) => {
@@ -461,9 +483,26 @@
       };
 
       const loadDraft = () => {
-        fields.title.value = draft.title || '';
-        fields.description.value = draft.description || '';
-        fields.pubDate.value = draft.pubDate || toLocalDateTime();
+        const saved = localStorage.getItem(DRAFT_KEY);
+        if (!saved) return;
+
+        try {
+          const draft = JSON.parse(saved);
+          fields.title.value = draft.title || '';
+          fields.description.value = draft.description || '';
+          fields.pubDate.value = draft.pubDate || toLocalDateTime();
+          fields.body.value = draft.body || '';
+        } catch {
+          localStorage.removeItem(DRAFT_KEY);
+        }
+      };
+
+      const getDraftCategory = () => {
+        try {
+          return JSON.parse(localStorage.getItem(DRAFT_KEY))?.category || '';
+        } catch {
+          return '';
+        }
       };
 
       // 카테고리 목록은 /categories.json(원본: src/data/categories.json)에서 가져온다.
@@ -495,11 +534,42 @@
           };
           appendOptions(roots, 0);
 
-          const desired = draft.category || 'journal';
+          const desired = getDraftCategory() || 'journal';
           if (byId.has(desired)) fields.category.value = desired;
         } catch {
           setStatus('카테고리 목록을 불러오지 못했습니다. 새로고침 해주세요.');
         }
+      };
+
+      const insertMarkdown = (textarea, options) => {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.slice(start, end);
+        let next = '';
+        let caret = start;
+
+        if (options.insert) {
+          next = options.insert + selected;
+          caret = start + next.length;
+        }
+
+        if (options.wrap) {
+          next = `${options.wrap}${selected || '텍스트'}${options.wrap}`;
+          caret = selected ? start + next.length : start + options.wrap.length + 3;
+        }
+
+        if (options.template) {
+          next = selected ? options.template.replace('링크', selected).replace('이미지 설명', selected) : options.template;
+          caret = start + next.length;
+        }
+
+        textarea.setRangeText(next, start, end, 'end');
+        textarea.focus();
+        textarea.selectionStart = caret;
+        textarea.selectionEnd = caret;
+        resizeTextarea(textarea);
+        keepCaretComfortable(textarea);
+        saveDraft(true);
       };
 
       let draftTimer = 0;
@@ -511,53 +581,17 @@
         }, 500);
       };
 
-      const createEditor = () => {
-        if (!window.toastui || !window.toastui.Editor) {
-          setStatus('편집기를 불러오지 못했습니다. 네트워크 확인 후 새로고침 해주세요.');
-          return;
-        }
-
-        editor = new toastui.Editor({
-          el: document.querySelector('#body-editor'),
-          initialEditType: 'wysiwyg',
-          height: 'auto',
-          minHeight: '620px',
-          initialValue: draft.body || '',
-          placeholder: '본문을 쓰세요.',
-          language: 'ko-KR',
-          usageStatistics: false,
-          autofocus: false,
-          toolbarItems: [
-            ['heading', 'bold', 'italic'],
-            ['quote', 'ul', 'ol'],
-            ['link', 'image'],
-            ['code', 'codeblock'],
-          ],
-          hooks: {
-            // 정적 페이지라 업로드 백엔드가 없으므로 파일 첨부 시 /uploads 경로만
-            // 넣고, 실제 파일 업로드는 CMS 미디어에서 하도록 안내한다.
-            addImageBlobHook: (blob, callback) => {
-              const name = (blob && blob.name) || 'image.png';
-              callback(`/uploads/${name}`, name.replace(/\.[^.]+$/, ''));
-              setStatus(`이미지 파일은 CMS 미디어에 "${name}" 이름으로 업로드해야 글에 표시됩니다.`);
-            },
-          },
-          events: {
-            change: scheduleDraft,
-          },
-        });
-      };
-
       loadDraft();
       loadCategories();
-      createEditor();
       if (!fields.pubDate.value) fields.pubDate.value = toLocalDateTime();
       resizeTextarea(fields.title);
       resizeTextarea(fields.description);
+      resizeTextarea(fields.body);
 
-      [fields.title, fields.description].forEach((field) => {
+      [fields.title, fields.description, fields.body].forEach((field) => {
         field.addEventListener('input', () => {
           resizeTextarea(field);
+          if (field === fields.body) keepCaretComfortable(field);
           scheduleDraft();
         });
       });
@@ -567,6 +601,16 @@
       });
 
       document.querySelector('#saveDraft').addEventListener('click', () => saveDraft(false));
+
+      document.querySelectorAll('[data-insert], [data-wrap], [data-template]').forEach((button) => {
+        button.addEventListener('click', () => {
+          insertMarkdown(fields.body, {
+            insert: button.dataset.insert,
+            wrap: button.dataset.wrap,
+            template: button.dataset.template,
+          });
+        });
+      });
 
       document.querySelector('#sendToCms').addEventListener('click', () => {
         const payload = getPayload();
