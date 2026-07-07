@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { CATEGORY_IDS } from './config/blog';
 
 const blog = defineCollection({
 	// Load Markdown and MDX files in the `src/content/blog/` directory.
@@ -10,7 +11,12 @@ const blog = defineCollection({
 		z.object({
 			title: z.string(),
 			description: z.string(),
-			category: z.string(),
+			category: z.string().refine(
+				(id) => CATEGORY_IDS.has(id),
+				(id) => ({
+					message: `존재하지 않는 카테고리 "${id}"입니다. src/data/categories.json을 확인하세요.`,
+				}),
+			),
 			// Transform string to Date object
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),

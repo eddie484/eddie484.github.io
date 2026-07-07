@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(command -v node.exe npx.exe npm.exe)",
+      "Bash(node.exe --version)",
+      "Bash(npm.exe run *)",
+      "Bash(\"/mnt/c/Program Files/nodejs/npm.cmd\" run build)",
+      "Bash(cmd.exe /c \"npm run build\")",
+      "Bash(grep -iA6 \"error\\\\|InvalidContentEntry\\\\|category\")"
+    ]
+  }
+}
