@@ -1,0 +1,182 @@
+<div class="deployment-toast" data-deployment-toast hidden role="status" aria-live="polite">
+	<span class="deployment-toast__indicator" aria-hidden="true"></span>
+	<span class="deployment-toast__message">배포가 완료되었습니다.</span>
+	<button class="deployment-toast__reload" type="button" data-deployment-reload>새로고침</button>
+	<button
+		class="deployment-toast__close"
+		type="button"
+		data-deployment-close
+		aria-label="배포 완료 알림 닫기"
+	>
+		×
+	</button>
+</div>
+
+<script>
+	const pendingKey = 'blog:deployment-pending';
+	const versionUrl = '/deployment-version.json';
+	const pollIntervalMs = 1_000;
+	const pollTimeoutMs = 90_000;
+
+	const toast = document.querySelector<HTMLElement>('[data-deployment-toast]');
+	const reloadButton = toast?.querySelector<HTMLButtonElement>('[data-deployment-reload]');
+	const closeButton = toast?.querySelector<HTMLButtonElement>('[data-deployment-close]');
+
+	let pollTimer: number | undefined;
+	let timeoutTimer: number | undefined;
+	let checking = false;
+
+	const clearPolling = () => {
+		if (pollTimer !== undefined) window.clearInterval(pollTimer);
+		if (timeoutTimer !== undefined) window.clearTimeout(timeoutTimer);
+		pollTimer = undefined;
+		timeoutTimer = undefined;
+		document.removeEventListener('visibilitychange', checkAfterVisibilityChange);
+	};
+
+	const finishPolling = (showToast: boolean) => {
+		clearPolling();
+		try {
+			sessionStorage.removeItem(pendingKey);
+		} catch {
+			// The notification is optional when browser storage is unavailable.
+		}
+		if (showToast && toast) toast.hidden = false;
+	};
+
+	const readPendingDeployment = () => {
+		try {
+			const rawValue = sessionStorage.getItem(pendingKey);
+			if (!rawValue) return null;
+
+			const value = JSON.parse(rawValue);
+			if (typeof value.version !== 'string' || typeof value.startedAt !== 'number') return null;
+			return value as { version: string; startedAt: number };
+		} catch {
+			return null;
+		}
+	};
+
+	const pendingDeployment = readPendingDeployment();
+
+	async function checkDeployment() {
+		if (!pendingDeployment || checking) return;
+		checking = true;
+
+		try {
+			const response = await fetch(`${versionUrl}?t=${Date.now()}`, { cache: 'no-store' });
+			if (!response.ok) return;
+
+			const data = await response.json();
+			if (typeof data.version === 'string' && data.version !== pendingDeployment.version) {
+				finishPolling(true);
+			}
+		} catch {
+			// A temporary network error should not end the short deployment wait.
+		} finally {
+			checking = false;
+		}
+	}
+
+	function checkAfterVisibilityChange() {
+		if (document.visibilityState === 'visible') void checkDeployment();
+	}
+
+	if (pendingDeployment) {
+		const elapsed = Date.now() - pendingDeployment.startedAt;
+
+		if (elapsed >= pollTimeoutMs) {
+			finishPolling(false);
+		} else {
+			void checkDeployment();
+			pollTimer = window.setInterval(checkDeployment, pollIntervalMs);
+			timeoutTimer = window.setTimeout(() => finishPolling(false), pollTimeoutMs - elapsed);
+			document.addEventListener('visibilitychange', checkAfterVisibilityChange);
+		}
+	}
+
+	reloadButton?.addEventListener('click', () => window.location.reload());
+	closeButton?.addEventListener('click', () => {
+		if (toast) toast.hidden = true;
+	});
+</script>
+
+<style>
+	.deployment-toast {
+		position: fixed;
+		right: 18px;
+		bottom: 18px;
+		z-index: 1000;
+		display: flex;
+		align-items: center;
+		gap: 9px;
+		min-height: 42px;
+		padding: 8px 9px 8px 12px;
+		border: 1px solid rgb(255 255 255 / 14%);
+		border-radius: 8px;
+		background: #243239;
+		box-shadow: 0 8px 24px rgb(28 39 44 / 22%);
+		color: #fff;
+		font-size: 13px;
+		line-height: 1.4;
+	}
+
+	.deployment-toast[hidden] {
+		display: none;
+	}
+
+	.deployment-toast__indicator {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #65d4b9;
+		box-shadow: 0 0 0 3px rgb(101 212 185 / 14%);
+	}
+
+	.deployment-toast__message {
+		white-space: nowrap;
+	}
+
+	.deployment-toast button {
+		border: 0;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.deployment-toast__reload {
+		padding: 4px 7px;
+		border-radius: 5px;
+		background: #e9f7f3;
+		color: #1f5c54;
+		font-weight: 700;
+	}
+
+	.deployment-toast__reload:hover,
+	.deployment-toast__reload:focus-visible {
+		background: #fff;
+	}
+
+	.deployment-toast__close {
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		background: transparent;
+		color: #c2c9cc;
+		font-size: 18px;
+		line-height: 24px;
+	}
+
+	.deployment-toast__close:hover,
+	.deployment-toast__close:focus-visible {
+		color: #fff;
+	}
+
+	@media (max-width: 640px) {
+		.deployment-toast {
+			right: 12px;
+			bottom: 12px;
+			left: 12px;
+			justify-content: center;
+		}
+	}
+</style>

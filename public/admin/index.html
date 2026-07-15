@@ -10,6 +10,45 @@
   <script type="module">
     import { init } from '/admin/sveltia-cms-patched.mjs';
 
+    const deploymentVersionUrl = '/deployment-version.json';
+    const deploymentPendingKey = 'blog:deployment-pending';
+
+    const fetchDeploymentVersion = async () => {
+      try {
+        const response = await fetch(`${deploymentVersionUrl}?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        return typeof data.version === 'string' ? data.version : null;
+      } catch {
+        return null;
+      }
+    };
+
+    // Save the version that was live before this edit. The blog compares it
+    // with the deployed version after Sveltia redirects back to the site.
+    const deploymentVersionPromise = fetchDeploymentVersion();
+
+    window.CMS.registerEventListener({
+      name: 'postSave',
+      handler: async () => {
+        const version = (await deploymentVersionPromise) ?? (await fetchDeploymentVersion());
+        if (!version) return;
+
+        try {
+          sessionStorage.setItem(
+            deploymentPendingKey,
+            JSON.stringify({ version, startedAt: Date.now() }),
+          );
+        } catch {
+          // Storage may be disabled without affecting the successful CMS save.
+        }
+      },
+    });
+
     init();
   </script>
 </body>

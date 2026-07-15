@@ -2,6 +2,7 @@
 import BaseHead from '../components/BaseHead.astro';
 import BlogHeader from '../components/BlogHeader.astro';
 import CategorySidebar from '../components/CategorySidebar.astro';
+import DeploymentToast from '../components/DeploymentToast.astro';
 import PostArticle from '../components/PostArticle.astro';
 import PostFooterList from '../components/PostFooterList.astro';
 import PostListPanel from '../components/PostListPanel.astro';
@@ -52,6 +53,7 @@ const scopeHref = activeCategory ? getCategoryUrl(activeCategory, lang) : `/${la
 	</head>
 	<body>
 		<BlogHeader lang={lang} altUrl={translationUrl} />
+		<DeploymentToast />
 		<main class="blog-shell">
 			<CategorySidebar posts={allPosts} activeCategoryId={activeCategoryId} lang={lang} />
 			<section class="blog-content" aria-label={t.postAreaAria}>
