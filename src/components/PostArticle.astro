@@ -13,10 +13,11 @@ const t = UI[lang];
 const category = getPostCategory(post);
 // CMS는 ko 폴더만 관리하므로 ko 글은 Sveltia로, en 글은 GitHub 파일 편집으로 연결한다.
 const encodedSlug = getPostSlug(post).split('/').map(encodeURIComponent).join('/');
+const writerEditUrl = `/admin/write.html?edit=${encodedSlug}`;
 const editUrl =
 	getPostLang(post) === 'en' && post.filePath
 		? `https://github.com/eddie484/eddie484.github.io/edit/main/${post.filePath}`
-		: new URL(`/admin/#/collections/blog/entries/${encodedSlug}`, Astro.site ?? Astro.url.origin).toString();
+		: writerEditUrl;
 ---
 
 <article class="post-article">

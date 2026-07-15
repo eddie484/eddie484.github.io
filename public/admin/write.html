@@ -158,6 +158,11 @@
       background: #f9fafb;
     }
 
+    .action:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
     .action.primary {
       border-color: var(--accent);
       background: var(--accent);
@@ -383,7 +388,12 @@
 
   <script>
     (() => {
-      const DRAFT_KEY = 'blog-writer:draft';
+      const NEW_DRAFT_KEY = 'blog-writer:draft';
+      const EDIT_HANDOFF_KEY = 'blog-writer:edit-handoff';
+      const searchParams = new URLSearchParams(window.location.search);
+      const editSlug = (searchParams.get('edit') || '').trim();
+      const isEditMode = Boolean(editSlug);
+      const DRAFT_KEY = isEditMode ? `blog-writer:draft:edit:${editSlug}` : NEW_DRAFT_KEY;
       const fields = {
         title: document.querySelector('#title'),
         description: document.querySelector('#description'),
@@ -391,7 +401,16 @@
         pubDate: document.querySelector('#pubDate'),
         body: document.querySelector('#body'),
         status: document.querySelector('#status'),
+        sendToCms: document.querySelector('#sendToCms'),
       };
+      let desiredCategory = '';
+
+      const encodeSlug = (slug) => slug.split('/').map(encodeURIComponent).join('/');
+
+      if (isEditMode) {
+        document.title = '글 수정 - 기록 공간';
+        fields.sendToCms.textContent = '수정 내용 보내기';
+      }
 
       const toLocalDateTime = (date = new Date()) => {
         const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -464,7 +483,15 @@
         body: fields.body.value.trimEnd(),
       });
 
-      const getCmsUrl = (payload) => {
+      const applyPayload = (payload) => {
+        fields.title.value = payload.title || '';
+        fields.description.value = payload.description || '';
+        fields.pubDate.value = payload.pubDate || toLocalDateTime();
+        fields.body.value = payload.body || '';
+        desiredCategory = payload.category || '';
+      };
+
+      const getNewCmsUrl = (payload) => {
         const params = new URLSearchParams();
 
         ['title', 'description', 'category', 'pubDate', 'body'].forEach((key) => {
@@ -477,6 +504,13 @@
         return url.toString();
       };
 
+      const getEditCmsUrl = (token) => {
+        const url = new URL('/admin/', window.location.origin);
+        const params = new URLSearchParams({ writerHandoff: token });
+        url.hash = `/collections/blog/entries/${encodeSlug(editSlug)}?${params.toString()}`;
+        return url.toString();
+      };
+
       const saveDraft = (silent = false) => {
         localStorage.setItem(DRAFT_KEY, JSON.stringify(getPayload()));
         if (!silent) setStatus('초안을 저장했습니다.');
@@ -484,25 +518,25 @@
 
       const loadDraft = () => {
         const saved = localStorage.getItem(DRAFT_KEY);
-        if (!saved) return;
+        if (!saved) return false;
 
         try {
           const draft = JSON.parse(saved);
-          fields.title.value = draft.title || '';
-          fields.description.value = draft.description || '';
-          fields.pubDate.value = draft.pubDate || toLocalDateTime();
-          fields.body.value = draft.body || '';
+          applyPayload(draft);
+          return true;
         } catch {
           localStorage.removeItem(DRAFT_KEY);
+          return false;
         }
       };
 
-      const getDraftCategory = () => {
-        try {
-          return JSON.parse(localStorage.getItem(DRAFT_KEY))?.category || '';
-        } catch {
-          return '';
-        }
+      const loadEditEntry = async () => {
+        const response = await fetch(`/admin/posts/${encodeSlug(editSlug)}.json?t=${Date.now()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const entry = await response.json();
+        if (entry.slug !== editSlug) throw new Error('글 주소가 일치하지 않습니다.');
+        applyPayload(entry);
       };
 
       // 카테고리 목록은 /categories.json(원본: src/data/categories.json)에서 가져온다.
@@ -534,7 +568,7 @@
           };
           appendOptions(roots, 0);
 
-          const desired = getDraftCategory() || 'journal';
+          const desired = desiredCategory || 'journal';
           if (byId.has(desired)) fields.category.value = desired;
         } catch {
           setStatus('카테고리 목록을 불러오지 못했습니다. 새로고침 해주세요.');
@@ -581,12 +615,28 @@
         }, 500);
       };
 
-      loadDraft();
-      loadCategories();
-      if (!fields.pubDate.value) fields.pubDate.value = toLocalDateTime();
-      resizeTextarea(fields.title);
-      resizeTextarea(fields.description);
-      resizeTextarea(fields.body);
+      const initialize = async () => {
+        fields.sendToCms.disabled = true;
+
+        try {
+          const restoredDraft = loadDraft();
+          if (isEditMode && !restoredDraft) await loadEditEntry();
+          await loadCategories();
+
+          if (!fields.pubDate.value) fields.pubDate.value = toLocalDateTime();
+          if (isEditMode) {
+            setStatus(restoredDraft ? '수정 초안을 불러왔습니다.' : '기존 글을 불러왔습니다.');
+          }
+
+          fields.sendToCms.disabled = false;
+        } catch {
+          setStatus('기존 글을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.');
+        }
+
+        resizeTextarea(fields.title);
+        resizeTextarea(fields.description);
+        resizeTextarea(fields.body);
+      };
 
       [fields.title, fields.description, fields.body].forEach((field) => {
         field.addEventListener('input', () => {
@@ -612,7 +662,7 @@
         });
       });
 
-      document.querySelector('#sendToCms').addEventListener('click', () => {
+      fields.sendToCms.addEventListener('click', () => {
         const payload = getPayload();
 
         if (!payload.title) {
@@ -633,9 +683,28 @@
         }
 
         localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+
+        if (isEditMode) {
+          const token = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          localStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify({
+            version: 1,
+            token,
+            collection: 'blog',
+            slug: editSlug,
+            draftKey: DRAFT_KEY,
+            createdAt: Date.now(),
+            data: payload,
+          }));
+          setStatus('수정 내용을 CMS로 보내는 중입니다.');
+          window.location.href = getEditCmsUrl(token);
+          return;
+        }
+
         setStatus('CMS로 보내는 중입니다.');
-        window.location.href = getCmsUrl(payload);
+        window.location.href = getNewCmsUrl(payload);
       });
+
+      initialize();
     })();
   </script>
 </body>
