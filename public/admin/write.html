@@ -389,7 +389,6 @@
   <script>
     (() => {
       const NEW_DRAFT_KEY = 'blog-writer:draft';
-      const EDIT_HANDOFF_KEY = 'blog-writer:edit-handoff';
       const searchParams = new URLSearchParams(window.location.search);
       const editSlug = (searchParams.get('edit') || '').trim();
       const isEditMode = Boolean(editSlug);
@@ -504,9 +503,14 @@
         return url.toString();
       };
 
-      const getEditCmsUrl = (token) => {
+      const getEditCmsUrl = (payload) => {
         const url = new URL('/admin/', window.location.origin);
-        const params = new URLSearchParams({ writerHandoff: token });
+        const params = new URLSearchParams();
+
+        ['title', 'description', 'category', 'pubDate', 'body'].forEach((key) => {
+          params.set(key, payload[key] || '');
+        });
+
         url.hash = `/collections/blog/entries/${encodeSlug(editSlug)}?${params.toString()}`;
         return url.toString();
       };
@@ -685,18 +689,8 @@
         localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
 
         if (isEditMode) {
-          const token = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          localStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify({
-            version: 1,
-            token,
-            collection: 'blog',
-            slug: editSlug,
-            draftKey: DRAFT_KEY,
-            createdAt: Date.now(),
-            data: payload,
-          }));
           setStatus('수정 내용을 CMS로 보내는 중입니다.');
-          window.location.href = getEditCmsUrl(token);
+          window.location.href = getEditCmsUrl(payload);
           return;
         }
 

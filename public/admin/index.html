@@ -7,82 +7,10 @@
   <title>Content Manager</title>
 </head>
 <body>
-  <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
-  <script>
-    (() => {
-      const HANDOFF_KEY = 'blog-writer:edit-handoff';
-      const MAX_HANDOFF_AGE = 30 * 60 * 1000;
+  <script type="module">
+    import { init } from '/admin/sveltia-cms-patched.mjs';
 
-      const getRouteToken = () => {
-        const query = window.location.hash.split('?')[1] || '';
-        return new URLSearchParams(query).get('writerHandoff') || '';
-      };
-
-      const readHandoff = () => {
-        try {
-          const handoff = JSON.parse(localStorage.getItem(HANDOFF_KEY));
-          if (!handoff || handoff.version !== 1) return null;
-          if (Date.now() - handoff.createdAt > MAX_HANDOFF_AGE) {
-            localStorage.removeItem(HANDOFF_KEY);
-            return null;
-          }
-          return handoff;
-        } catch {
-          localStorage.removeItem(HANDOFF_KEY);
-          return null;
-        }
-      };
-
-      const matchesEntry = (entry, handoff) => (
-        handoff
-        && handoff.token === getRouteToken()
-        && handoff.collection === entry.get('collection')
-        && handoff.slug === entry.get('slug')
-        && entry.get('newRecord') === false
-      );
-
-      CMS.registerEventListener({
-        name: 'preSave',
-        handler: ({ entry }) => {
-          const handoff = readHandoff();
-          if (!matchesEntry(entry, handoff)) return entry;
-          return entry.get('data').merge(handoff.data);
-        },
-      });
-
-      CMS.registerEventListener({
-        name: 'postSave',
-        handler: ({ entry }) => {
-          const handoff = readHandoff();
-          if (!matchesEntry(entry, handoff)) return;
-          localStorage.removeItem(HANDOFF_KEY);
-          if (handoff.draftKey) localStorage.removeItem(handoff.draftKey);
-        },
-      });
-
-      const handoff = readHandoff();
-      if (handoff && handoff.token === getRouteToken()) {
-        const notice = document.createElement('div');
-        notice.setAttribute('role', 'status');
-        notice.textContent = '글쓰기 페이지의 수정 내용이 준비되었습니다. CMS에서 저장하면 기존 글에 적용됩니다.';
-        Object.assign(notice.style, {
-          position: 'fixed',
-          top: '12px',
-          left: '50%',
-          zIndex: '2147483647',
-          transform: 'translateX(-50%)',
-          maxWidth: 'calc(100vw - 32px)',
-          padding: '10px 16px',
-          borderRadius: '4px',
-          background: '#0f8f54',
-          color: '#fff',
-          font: '600 14px/1.4 system-ui, sans-serif',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.18)',
-          textAlign: 'center',
-        });
-        document.body.appendChild(notice);
-      }
-    })();
+    init();
   </script>
 </body>
 </html>
