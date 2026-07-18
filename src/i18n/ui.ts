@@ -22,6 +22,9 @@ const ko = {
 	logout: '로그아웃',
 	langToggleAria: '언어 선택',
 	postAreaAria: '글 영역',
+	firstFollowNav: 'FIRST/FOLLOW',
+	firstFollow: 'FIRST/FOLLOW 계산기',
+	firstFollowDescription: '문법을 입력해 FIRST와 FOLLOW 집합을 계산하고 결과를 비교합니다.',
 
 	// 사이드바
 	categories: '카테고리',
@@ -66,6 +69,7 @@ const ko = {
 	// 리다이렉트 안내
 	goToBlog: '블로그로 이동합니다.',
 	goToProfile: '프로필로 이동합니다.',
+	goToFirstFollow: 'FIRST/FOLLOW 계산기로 이동합니다.',
 };
 
 export type UIDict = typeof ko;
@@ -78,6 +82,9 @@ const en: UIDict = {
 	logout: 'Log out',
 	langToggleAria: 'Select language',
 	postAreaAria: 'Post area',
+	firstFollowNav: 'FIRST/FOLLOW',
+	firstFollow: 'FIRST/FOLLOW Calculator',
+	firstFollowDescription: 'Calculate FIRST and FOLLOW sets from a grammar and compare results.',
 
 	categories: 'Categories',
 	allPosts: 'All Posts',
@@ -116,6 +123,7 @@ const en: UIDict = {
 
 	goToBlog: 'Redirecting to the blog.',
 	goToProfile: 'Redirecting to the profile.',
+	goToFirstFollow: 'Redirecting to the FIRST/FOLLOW calculator.',
 };
 
 export const UI: Record<Lang, UIDict> = { ko, en };

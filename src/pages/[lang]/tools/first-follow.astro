@@ -1,0 +1,74 @@
+---
+import BaseHead from '../../../components/BaseHead.astro';
+import BlogHeader from '../../../components/BlogHeader.astro';
+import FirstFollowCalculator from '../../../components/FirstFollowCalculator.astro';
+import { BLOG_TITLE } from '../../../config/blog';
+import { LANGS, otherLang, UI, type Lang } from '../../../i18n/ui';
+
+export function getStaticPaths() {
+	return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = UI[lang];
+const translationUrl = `/${otherLang(lang)}/tools/first-follow/`;
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<BaseHead
+			title={`${t.firstFollow} | ${BLOG_TITLE[lang]}`}
+			description={t.firstFollowDescription}
+			lang={lang}
+			translationUrl={translationUrl}
+		/>
+	</head>
+	<body>
+		<BlogHeader lang={lang} altUrl={translationUrl} />
+		<main class="tool-page">
+			<header class="tool-intro">
+				<p class="tool-intro__eyebrow">Compiler Tool</p>
+				<h1>{t.firstFollow}</h1>
+				<p>{t.firstFollowDescription}</p>
+			</header>
+			<FirstFollowCalculator lang={lang} />
+		</main>
+	</body>
+</html>
+
+<style>
+	.tool-page {
+		width: var(--site-width);
+		min-width: var(--site-width);
+		margin: 22px auto 80px;
+	}
+
+	.tool-intro {
+		margin-bottom: 18px;
+		padding: 24px 28px;
+		border: 1px solid var(--line);
+		background: var(--surface);
+	}
+
+	.tool-intro__eyebrow {
+		margin: 0 0 4px;
+		color: var(--accent);
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+	}
+
+	.tool-intro h1 {
+		margin: 0;
+		color: var(--ink);
+		font-size: 28px;
+		line-height: 1.25;
+	}
+
+	.tool-intro > p:last-child {
+		margin: 8px 0 0;
+		color: var(--muted);
+		font-size: 14px;
+	}
+</style>

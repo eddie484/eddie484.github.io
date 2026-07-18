@@ -76,6 +76,12 @@ const bannerStyle = BANNER.image
 			}
 		</div>
 		<div class="blog-nav__group blog-nav__group--external">
+			<a
+				href={`/${lang}/tools/first-follow/`}
+				class:list={{ active: isActive(`/${lang}/tools/first-follow/`) }}
+			>
+				{t.firstFollowNav}
+			</a>
 			{EXTERNAL_NAV.map((item) => <a href={item.href} target="_blank">{item.label}</a>)}
 		</div>
 	</nav>

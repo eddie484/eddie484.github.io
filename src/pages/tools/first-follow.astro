@@ -1,0 +1,11 @@
+---
+import { BLOG_TITLE } from '../../config/blog';
+import { UI } from '../../i18n/ui';
+import RedirectPage from '../../layouts/RedirectPage.astro';
+---
+
+<RedirectPage
+	to="/ko/tools/first-follow/"
+	title={`${UI.ko.firstFollow} | ${BLOG_TITLE.ko}`}
+	message={UI.ko.goToFirstFollow}
+/>
