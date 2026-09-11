@@ -1,0 +1,407 @@
+---
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const copy = {
+	ko: {
+		workspace: 'MIF 변환 작업 영역',
+		input: '32비트 이진 명령어',
+		inputLabel: '명령어 입력',
+		sample: '샘플',
+		clear: '지우기',
+		inputHelp: '각 줄은 구분 기호를 제외하고 정확히 32비트여야 합니다.',
+		emptyCount: '0개 명령어',
+		convert: 'HEX MIF로 변환',
+		copy: '복사',
+		download: '다운로드',
+		initialMessage: '이진 명령어를 입력한 뒤 변환 버튼을 눌러 주세요.',
+		outputLabel: '변환 결과',
+		outputPlaceholder: '변환된 MIF가 여기에 표시됩니다.',
+		settings: '출력 설정',
+		guide: '변환 규칙',
+		cleanTitle: '이진수 정리',
+		cleanBody: '공백·밑줄과 0b 접두사를 제거하며, 빈 줄과 // 또는 # 뒤의 주석은 건너뜁니다.',
+		hexTitle: 'HEX 변환',
+		hexBody: '32비트 명령어를 8자리 대문자 HEX 값으로 변환합니다. 최대 8,192개까지 입력할 수 있습니다.',
+		fillTitle: '메모리 채움',
+		fillBody: '주소는 0000부터 시작하며, 마지막 명령어 이후부터 1FFF까지 FC000000으로 채웁니다.',
+	},
+	en: {
+		workspace: 'MIF conversion workspace',
+		input: '32-bit binary instructions',
+		inputLabel: 'Instruction input',
+		sample: 'Sample',
+		clear: 'Clear',
+		inputHelp: 'Each line must contain exactly 32 bits, excluding separators.',
+		emptyCount: '0 instructions',
+		convert: 'Convert to HEX MIF',
+		copy: 'Copy',
+		download: 'Download',
+		initialMessage: 'Enter binary instructions, then select Convert to HEX MIF.',
+		outputLabel: 'Conversion result',
+		outputPlaceholder: 'Your converted MIF will appear here.',
+		settings: 'Output settings',
+		guide: 'Conversion rules',
+		cleanTitle: 'Clean up binary input',
+		cleanBody: 'Spaces, underscores, and the 0b prefix are removed. Blank lines and comments after // or # are skipped.',
+		hexTitle: 'Convert to HEX',
+		hexBody: 'Each 32-bit instruction becomes an 8-digit uppercase HEX value. Enter up to 8,192 instructions.',
+		fillTitle: 'Fill memory',
+		fillBody: 'Addresses start at 0000. Unused addresses after the last instruction through 1FFF are filled with FC000000.',
+	},
+} as const;
+const t = copy[lang];
+---
+
+<div class="binary-mif-converter" data-binary-mif>
+	<section class="workspace" aria-label={t.workspace}>
+		<div class="panel">
+			<div class="panel-head">
+				<div>
+					<p class="eyebrow">Input</p>
+					<h2>{t.input}</h2>
+				</div>
+				<div class="actions">
+					<button type="button" id="load-sample">{t.sample}</button>
+					<button type="button" id="clear-input">{t.clear}</button>
+				</div>
+			</div>
+			<label class="field" for="binary-input">
+				<span>{t.inputLabel}</span>
+				<textarea
+					id="binary-input"
+					spellcheck="false"
+					autocomplete="off"
+					aria-describedby="binary-input-help"
+					placeholder={'1100_1110_0000_0000_0000_0011_0101_0100\n1011_0100_1111_1110_1111_1111_0010_0000'}
+				></textarea>
+			</label>
+			<div class="input-help">
+				<p id="binary-input-help">{t.inputHelp}</p>
+				<span id="input-count">{t.emptyCount}</span>
+			</div>
+			<button type="button" id="convert" class="primary">{t.convert}</button>
+		</div>
+
+		<div class="panel">
+			<div class="panel-head">
+				<div>
+					<p class="eyebrow">Output</p>
+					<h2>HEX MIF</h2>
+				</div>
+				<div class="actions">
+					<button type="button" id="copy-output" disabled>{t.copy}</button>
+					<button type="button" id="download-output" disabled>{t.download}</button>
+				</div>
+			</div>
+			<div class="format-settings" aria-label={t.settings}>
+				<span><strong>WIDTH</strong> 32</span>
+				<span><strong>DEPTH</strong> 8192</span>
+				<span><strong>RADIX</strong> HEX</span>
+			</div>
+			<div id="message" class="message" aria-live="polite">{t.initialMessage}</div>
+			<label class="field" for="mif-output">
+				<span>{t.outputLabel}</span>
+				<textarea
+					id="mif-output"
+					class="output"
+					readonly
+					spellcheck="false"
+					placeholder={t.outputPlaceholder}
+				></textarea>
+			</label>
+		</div>
+	</section>
+
+	<section class="guide" aria-labelledby="binary-mif-guide-title">
+		<p class="eyebrow">Format guide</p>
+		<h2 id="binary-mif-guide-title">{t.guide}</h2>
+		<div class="guide-grid">
+			<div><span class="step">01</span><h3>{t.cleanTitle}</h3><p>{t.cleanBody}</p></div>
+			<div><span class="step">02</span><h3>{t.hexTitle}</h3><p>{t.hexBody}</p></div>
+			<div><span class="step">03</span><h3>{t.fillTitle}</h3><p>{t.fillBody}</p></div>
+		</div>
+	</section>
+</div>
+
+<script is:inline src="/tools/bin-to-mif/app.js" defer></script>
+
+<style>
+	.binary-mif-converter {
+		--mif-code: #172033;
+		--mif-code-bg: #f8fafc;
+		--mif-danger: #b42318;
+	}
+
+	button,
+	textarea {
+		font: inherit;
+	}
+
+	button {
+		min-height: 38px;
+		padding: 0 14px;
+		border: 1px solid var(--line-strong);
+		border-radius: 3px;
+		background: var(--surface);
+		color: var(--ink);
+		cursor: pointer;
+		transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+	}
+
+	button:hover:not(:disabled) {
+		border-color: var(--accent);
+	}
+
+	button:focus-visible,
+	textarea:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	button:active:not(:disabled) {
+		transform: translateY(1px);
+	}
+
+	button:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+
+	button.primary {
+		min-height: 44px;
+		border-color: var(--accent);
+		background: var(--accent);
+		color: #fff;
+		font-weight: 700;
+	}
+
+	.workspace {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 18px;
+		align-items: stretch;
+	}
+
+	.panel,
+	.guide {
+		padding: 18px;
+		border: 1px solid var(--line);
+		background: var(--surface);
+	}
+
+	.panel {
+		display: flex;
+		min-width: 0;
+		min-height: 720px;
+		flex-direction: column;
+	}
+
+	.panel-head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 14px;
+		margin-bottom: 14px;
+	}
+
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 8px;
+	}
+
+	.actions button {
+		white-space: nowrap;
+	}
+
+	.eyebrow {
+		margin: 0 0 3px;
+		color: var(--accent);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1.3;
+		text-transform: uppercase;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--ink);
+		font-size: 20px;
+		font-weight: 700;
+		line-height: 1.25;
+	}
+
+	.field {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.field > span {
+		color: var(--muted);
+		font-size: 13px;
+		font-weight: 700;
+	}
+
+	textarea {
+		width: 100%;
+		min-height: 520px;
+		flex: 1;
+		resize: vertical;
+		padding: 14px;
+		border: 1px solid var(--line);
+		border-radius: 3px;
+		background: var(--mif-code-bg);
+		color: var(--mif-code);
+		font-family: 'Cascadia Code', Consolas, monospace;
+		font-size: 13px;
+		line-height: 1.55;
+		tab-size: 2;
+	}
+
+	textarea::placeholder {
+		color: var(--muted);
+	}
+
+	.output {
+		white-space: pre;
+	}
+
+	.input-help {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+		margin: 10px 0;
+		color: var(--muted);
+		font-size: 12px;
+	}
+
+	.input-help p {
+		margin: 0;
+	}
+
+	#input-count {
+		flex-shrink: 0;
+	}
+
+	.format-settings {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-bottom: 10px;
+	}
+
+	.format-settings span {
+		padding: 3px 8px;
+		border: 1px solid var(--line);
+		border-radius: 3px;
+		color: var(--muted);
+		font-family: 'Cascadia Code', Consolas, monospace;
+		font-size: 12px;
+	}
+
+	.format-settings strong {
+		color: var(--accent);
+	}
+
+	.message {
+		min-height: 28px;
+		margin-bottom: 10px;
+		color: var(--muted);
+		font-size: 13px;
+		white-space: pre-line;
+	}
+
+	.message.success {
+		color: var(--accent);
+	}
+
+	.message.error {
+		color: var(--mif-danger);
+	}
+
+	.guide {
+		margin-top: 18px;
+	}
+
+	.guide-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 14px;
+		margin-top: 16px;
+	}
+
+	.guide-grid > div {
+		padding: 14px;
+		border: 1px solid var(--line);
+		background: var(--mif-code-bg);
+	}
+
+	.step {
+		color: var(--accent);
+		font-family: 'Cascadia Code', Consolas, monospace;
+		font-size: 12px;
+		font-weight: 700;
+	}
+
+	h3 {
+		margin: 6px 0;
+		color: var(--ink);
+		font-size: 15px;
+	}
+
+	.guide-grid p {
+		margin: 0;
+		color: var(--muted);
+		font-size: 13px;
+		line-height: 1.55;
+	}
+
+	@media (max-width: 980px) {
+		.workspace {
+			grid-template-columns: 1fr;
+		}
+
+		.panel {
+			min-height: auto;
+		}
+
+		textarea {
+			min-height: 360px;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.panel,
+		.guide {
+			padding: 12px;
+		}
+
+		.panel-head,
+		.input-help {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.actions {
+			justify-content: stretch;
+		}
+
+		.actions button {
+			flex: 1 1 0;
+		}
+
+		.guide-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

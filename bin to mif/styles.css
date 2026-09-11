@@ -1,0 +1,380 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --ink: #172033;
+  --muted: #62708a;
+  --line: #d8deea;
+  --strong-line: #b8c2d6;
+  --accent: #0f766e;
+  --accent-dark: #0b5f59;
+  --accent-soft: #e7f5f2;
+  --danger: #b42318;
+  --danger-soft: #fff1f0;
+  --success: #0b6b45;
+  --code: #111827;
+  --code-bg: #f8fafc;
+  font-family:
+    "Segoe UI",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    system-ui,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(15, 118, 110, 0.1), transparent 300px),
+    var(--bg);
+  color: var(--ink);
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid var(--strong-line);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 0 14px;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.18);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.app-shell {
+  width: min(1440px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 36px 0 48px;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: clamp(27px, 3vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+h3 {
+  margin-bottom: 7px;
+  font-size: 15px;
+}
+
+.description {
+  max-width: 660px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.format-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.format-badges span {
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--muted);
+  padding: 7px 11px;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+}
+
+.format-badges strong {
+  color: var(--accent);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.panel,
+.guide {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  box-shadow: 0 16px 40px rgba(23, 32, 51, 0.07);
+}
+
+.panel {
+  display: flex;
+  min-height: 700px;
+  flex-direction: column;
+  padding: 18px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 15px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+textarea {
+  width: 100%;
+  min-height: 520px;
+  flex: 1;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--code-bg);
+  color: var(--code);
+  padding: 14px;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+textarea::placeholder {
+  color: #98a2b3;
+}
+
+textarea.output {
+  background: #f6faf9;
+  white-space: pre;
+}
+
+.input-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 34px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.input-help p {
+  margin: 0;
+}
+
+#input-count {
+  flex: 0 0 auto;
+  font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.primary-button {
+  min-height: 46px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.primary-button:hover:not(:disabled) {
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+  color: #ffffff;
+}
+
+.message {
+  min-height: 38px;
+  margin-bottom: 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--code-bg);
+  color: var(--muted);
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.message.success {
+  border-color: #abd8c7;
+  background: var(--accent-soft);
+  color: var(--success);
+}
+
+.message.error {
+  border-color: #f1b8b2;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.guide {
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.guide-grid > div {
+  min-height: 126px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--code-bg);
+  padding: 14px;
+}
+
+.guide-grid p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.step {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .page-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .format-badges {
+    justify-content: flex-start;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    min-height: auto;
+  }
+
+  textarea {
+    min-height: 430px;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-shell {
+    width: min(100vw - 20px, 1440px);
+    padding: 20px 0 30px;
+  }
+
+  .panel,
+  .guide {
+    padding: 13px;
+  }
+
+  .panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions button {
+    flex: 1 1 0;
+  }
+
+  .input-help {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 7px 0;
+  }
+
+  .guide-grid {
+    grid-template-columns: 1fr;
+  }
+}

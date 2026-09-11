@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="32비트 이진 명령어를 Intel/Quartus MIF HEX 형식으로 변환합니다."
+    />
+    <title>Binary to MIF 변환기</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="page-head">
+        <div>
+          <p class="eyebrow">Memory Initialization File</p>
+          <h1>Binary to MIF 변환기</h1>
+          <p class="description">
+            한 줄에 하나씩 입력한 32비트 이진 명령어를 주소가 포함된 HEX MIF 형식으로
+            변환합니다.
+          </p>
+        </div>
+        <div class="format-badges" aria-label="출력 설정">
+          <span><strong>WIDTH</strong> 32</span>
+          <span><strong>DEPTH</strong> 8192</span>
+          <span><strong>RADIX</strong> HEX</span>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="MIF 변환 작업 영역">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Input</p>
+              <h2>32비트 이진 명령어</h2>
+            </div>
+            <div class="actions">
+              <button type="button" id="load-sample">샘플</button>
+              <button type="button" id="clear-input">비우기</button>
+            </div>
+          </div>
+
+          <label class="field" for="binary-input">
+            <span>명령어 입력</span>
+            <textarea
+              id="binary-input"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="1100_1110_0000_0000_0000_0011_0101_0100&#10;1011_0100_1111_1110_1111_1111_0010_0000"
+            ></textarea>
+          </label>
+
+          <div class="input-help">
+            <p>각 줄은 구분 기호를 제외하고 정확히 32비트여야 합니다.</p>
+            <span id="input-count">0개 명령어</span>
+          </div>
+
+          <button type="button" id="convert" class="primary-button">HEX MIF로 변환</button>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Output</p>
+              <h2>HEX MIF</h2>
+            </div>
+            <div class="actions">
+              <button type="button" id="copy-output" disabled>복사</button>
+              <button type="button" id="download-output" disabled>다운로드</button>
+            </div>
+          </div>
+
+          <div id="message" class="message" aria-live="polite">
+            이진 명령어를 입력한 뒤 변환 버튼을 눌러 주세요.
+          </div>
+
+          <label class="field" for="mif-output">
+            <span>변환 결과</span>
+            <textarea
+              id="mif-output"
+              class="output"
+              readonly
+              spellcheck="false"
+              placeholder="변환된 MIF가 여기에 표시됩니다."
+            ></textarea>
+          </label>
+        </article>
+      </section>
+
+      <section class="guide" aria-labelledby="guide-title">
+        <p class="eyebrow">Format guide</p>
+        <h2 id="guide-title">변환 규칙</h2>
+        <div class="guide-grid">
+          <div>
+            <span class="step">01</span>
+            <h3>이진수 정리</h3>
+            <p>밑줄과 공백은 자동으로 제거하며, 빈 줄은 건너뜁니다.</p>
+          </div>
+          <div>
+            <span class="step">02</span>
+            <h3>HEX 변환</h3>
+            <p>32비트 명령어를 8자리 대문자 HEX 값으로 변환합니다.</p>
+          </div>
+          <div>
+            <span class="step">03</span>
+            <h3>메모리 채움</h3>
+            <p>마지막 명령어 이후부터 1FFF 주소까지 FC000000으로 채웁니다.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

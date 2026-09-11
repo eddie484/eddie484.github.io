@@ -22,6 +22,9 @@ const ko = {
 	logout: '로그아웃',
 	langToggleAria: '언어 선택',
 	postAreaAria: '글 영역',
+	binaryMifNav: 'BIN → MIF',
+	binaryMif: 'Binary to MIF 변환기',
+	binaryMifDescription: '32비트 이진 명령어를 주소가 포함된 HEX MIF 형식으로 변환합니다.',
 	firstFollowNav: 'FIRST/FOLLOW',
 	firstFollow: 'FIRST/FOLLOW 계산기',
 	firstFollowDescription: '문법을 입력해 FIRST와 FOLLOW 집합을 계산하고 결과를 비교합니다.',
@@ -69,6 +72,7 @@ const ko = {
 	// 리다이렉트 안내
 	goToBlog: '블로그로 이동합니다.',
 	goToProfile: '프로필로 이동합니다.',
+	goToBinaryMif: 'Binary to MIF 변환기로 이동합니다.',
 	goToFirstFollow: 'FIRST/FOLLOW 계산기로 이동합니다.',
 };
 
@@ -82,6 +86,9 @@ const en: UIDict = {
 	logout: 'Log out',
 	langToggleAria: 'Select language',
 	postAreaAria: 'Post area',
+	binaryMifNav: 'BIN → MIF',
+	binaryMif: 'Binary to MIF Converter',
+	binaryMifDescription: 'Convert 32-bit binary instructions into HEX MIF format with memory addresses.',
 	firstFollowNav: 'FIRST/FOLLOW',
 	firstFollow: 'FIRST/FOLLOW Calculator',
 	firstFollowDescription: 'Calculate FIRST and FOLLOW sets from a grammar and compare results.',
@@ -123,6 +130,7 @@ const en: UIDict = {
 
 	goToBlog: 'Redirecting to the blog.',
 	goToProfile: 'Redirecting to the profile.',
+	goToBinaryMif: 'Redirecting to the Binary to MIF converter.',
 	goToFirstFollow: 'Redirecting to the FIRST/FOLLOW calculator.',
 };
 
