@@ -14,7 +14,8 @@ const copy = {
 		clear: '지우기',
 		calculate: '계산',
 		result: '계산 결과',
-		copy: '복사',
+		copySet: '집합 형식 복사',
+		copyC: 'C 함수 형식 복사',
 		setFormat: '집합 형식',
 		cFormat: 'C 함수 형식',
 		compare: 'FIRST/FOLLOW 비교',
@@ -28,7 +29,8 @@ const copy = {
 		clear: 'Clear',
 		calculate: 'Calculate',
 		result: 'Results',
-		copy: 'Copy',
+		copySet: 'Copy sets',
+		copyC: 'Copy C functions',
 		setFormat: 'Set format',
 		cFormat: 'C function format',
 		compare: 'Compare FIRST/FOLLOW',
@@ -67,7 +69,10 @@ const t = copy[lang];
 					<p class="eyebrow">Result</p>
 					<h2>{t.result}</h2>
 				</div>
-				<button type="button" id="copy-result">{t.copy}</button>
+				<div class="actions copy-actions">
+					<button type="button" id="copy-set-result">{t.copySet}</button>
+					<button type="button" id="copy-code-result">{t.copyC}</button>
+				</div>
 			</div>
 			<div id="messages" class="messages" aria-live="polite"></div>
 			<div class="output-stack">
@@ -208,6 +213,14 @@ const t = copy[lang];
 		flex-wrap: wrap;
 		justify-content: flex-end;
 		gap: 8px;
+	}
+
+	.first-follow-calculator .copy-actions {
+		flex-wrap: nowrap;
+	}
+
+	.first-follow-calculator .copy-actions button {
+		white-space: nowrap;
 	}
 
 	.first-follow-calculator .eyebrow {

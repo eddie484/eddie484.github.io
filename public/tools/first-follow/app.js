@@ -11,7 +11,8 @@
       invalidProduction: (line) => `${line}번째 생성 규칙 형식이 올바르지 않습니다.`,
       undefinedNonTerminals: (symbols) => `정의되지 않은 비단말 기호: ${symbols}`,
       calculated: "계산이 완료되었습니다.",
-      copied: "계산 결과를 복사했습니다.",
+      copiedSet: "집합 형식을 복사했습니다.",
+      copiedC: "C 함수 형식을 복사했습니다.",
       copyFailed: "복사하지 못했습니다. 브라우저 권한을 확인해 주세요.",
       unparsedLeft: (count) => `버전 A에서 ${count}줄을 해석하지 못했습니다.`,
       unparsedRight: (count) => `버전 B에서 ${count}줄을 해석하지 못했습니다.`,
@@ -24,7 +25,8 @@
       invalidProduction: (line) => `Production ${line} is not in a valid format.`,
       undefinedNonTerminals: (symbols) => `Undefined nonterminals: ${symbols}`,
       calculated: "Calculation complete.",
-      copied: "Results copied.",
+      copiedSet: "Sets copied.",
+      copiedC: "C functions copied.",
       copyFailed: "Could not copy the results. Check your browser permissions.",
       unparsedLeft: (count) => `${count} line(s) in version A could not be parsed.`,
       unparsedRight: (count) => `${count} line(s) in version B could not be parsed.`,
@@ -278,14 +280,20 @@
 
   function formatCFunction(functionName, nonTerminals, setMap) {
     const lines = [`int ${functionName}(int input_token, int nt_set){`, "    switch(nt_set){"];
+    const setName = functionName === "first" ? "First" : "Follow";
 
     nonTerminals.forEach((nonTerminal) => {
       lines.push(`        case ${toNtConstant(nonTerminal)}:`);
       lines.push(`            return ${formatCCondition(setMap.get(nonTerminal))};`);
+      lines.push("");
     });
 
     lines.push("        default:");
-    lines.push("            return 0;");
+    lines.push(
+      `            printf("오류: 존재하지 않는 Non-Terminal에 대한 ${setName}를 요구하고 있습니다. 요구하는 ${setName}: %d\\n", nt_set);`,
+    );
+    lines.push("            exit(1);");
+    lines.push("");
     lines.push("    }");
     lines.push("}");
     return lines.join("\n");
@@ -469,15 +477,12 @@
 
     root.querySelector("#calculate").addEventListener("click", runCalculation);
 
-    root.querySelector("#copy-result").addEventListener("click", async () => {
-      const text = [resultOutput.textContent, codeOutput.textContent]
-        .filter(Boolean)
-        .join("\n\n")
-        .trim();
-      if (!text) return;
+    root.querySelector("#copy-set-result").addEventListener("click", () => {
+      copyOutput(resultOutput, messages.copiedSet);
+    });
 
-      const copied = await copyText(text);
-      setMessage(copied ? messages.copied : messages.copyFailed, !copied);
+    root.querySelector("#copy-code-result").addEventListener("click", () => {
+      copyOutput(codeOutput, messages.copiedC);
     });
 
     root.querySelector("#clear-compare").addEventListener("click", () => {
@@ -492,6 +497,14 @@
     });
 
     runCalculation();
+
+    async function copyOutput(output, successMessage) {
+      const text = output.textContent.trim();
+      if (!text) return;
+
+      const copied = await copyText(text);
+      setMessage(copied ? successMessage : messages.copyFailed, !copied);
+    }
 
     function runCalculation() {
       try {
